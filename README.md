@@ -39,7 +39,7 @@ JWT_SECRET=change-me
 PORT=4000
 NODE_ENV=development
 
-# SMTP (optionnel si tu envoies des emails)
+# SMTP (si tu envoies des emails)
 SMTP_HOST=
 SMTP_PORT=
 SMTP_USER=
@@ -49,7 +49,6 @@ SMTP_FROM="HealthCRM <noreply@exemple.com>"
 ## ⚠️ Variables et .env du front frontend/.env.development
 
 VITE_API_URL=http://localhost:4000/api
-
 
 ## Démarrage back et front
 -----------------------------------------------
