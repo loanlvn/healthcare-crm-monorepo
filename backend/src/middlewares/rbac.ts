@@ -1,0 +1,27 @@
+import type { Role } from '@prisma/client';
+import { RequestHandler } from 'express';
+
+export type Action =
+  | 'USER_READ' | 'USER_WRITE'
+  | 'PATIENT_READ' | 'PATIENT_WRITE' | 'PATIENT_DELETE'
+  | 'MESSAGE_READ' | 'MESSAGE_WRITE'
+  | 'APPOINTMENT_READ' | 'APPOINTMENT_WRITE' | 'APPOINTMENT_DELETE'
+  | 'INVOICE_READ' | 'INVOICE_WRITE' | 'INVOICE_SEND' | 'INVOICE_VOID'
+  | 'PAYMENT_READ' | 'PAYMENT_WRITE'
+  | 'NOTIFICATION_READ' | 'NOTIFICATION_WRITE';
+
+export type RolePolicy = Record<Role, Action[]>;
+
+export const DEFAULT_POLICY: RolePolicy = {
+  ADMIN: ['USER_READ','USER_WRITE','PATIENT_READ','PATIENT_WRITE','PATIENT_DELETE','MESSAGE_READ','MESSAGE_WRITE','APPOINTMENT_READ','APPOINTMENT_WRITE','APPOINTMENT_DELETE','INVOICE_READ','INVOICE_WRITE','INVOICE_SEND','INVOICE_VOID','PAYMENT_READ','PAYMENT_WRITE','NOTIFICATION_READ','NOTIFICATION_WRITE'],
+  DOCTOR:['PATIENT_READ','PATIENT_WRITE','MESSAGE_READ','MESSAGE_WRITE','APPOINTMENT_READ','APPOINTMENT_WRITE','INVOICE_READ','INVOICE_WRITE','INVOICE_SEND','PAYMENT_READ','PAYMENT_WRITE','NOTIFICATION_READ'],
+  SECRETARY:['PATIENT_READ','PATIENT_WRITE','MESSAGE_READ','MESSAGE_WRITE','APPOINTMENT_READ','APPOINTMENT_WRITE','INVOICE_READ','PAYMENT_READ','NOTIFICATION_READ']
+};
+
+export const rbac = (...actions: Action[]): RequestHandler => (req, res, next) => {
+  const role = req.user?.role;
+  if(!role) return res.status(401).json({error: 'UNAUTHORIZED'});
+  const allowed = DEFAULT_POLICY[role] ?? [];
+  if (!actions.every(a => allowed.includes(a))) return res.status(403).json({error: 'FORBIDDEN'});
+  next();
+};
