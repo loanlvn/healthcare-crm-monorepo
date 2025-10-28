@@ -5,18 +5,6 @@ Monorepo contenant **frontend** (React + Vite + TypeScript) et **backend** (Node
 - Patients, Médecins, RDV (rappels), Messages/Chat, Facturation (invoices/payments), Notifications
 - Upload d’avatars utilisateurs (local, dossier `backend/uploads/avatars`)
 
-## 🗂️ Structure
-
-├─ frontend/ # App React (Vite + TS)
-│ ├─ src/
-│ └─ .env.development # non commité
-│ └─ .env.production # non commité
-├─ backend/ # API Node/Express (TS) + Prisma
-│ ├─ src/
-│ ├─ prisma/ # schema + migrations + seed
-│ └─ .env # non commité
-└─ .gitignore
-
 ## 🧰 Stack principale
 - **Frontend** : React 18, Vite, TypeScript
 - **Backend** : Node 20, Express, TypeScript, Zod, Nodemailer
