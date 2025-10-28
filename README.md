@@ -23,7 +23,7 @@ Monorepo contenant **frontend** (React + Vite + TypeScript) et **backend** (Node
 - **DB** : PostgreSQL + **Prisma**
 - **Auth** : JWT + RBAC
 - **Jobs** : rappels de rendez-vous
-- **Tests/CI** : (à compléter si nécessaire)
+- **Tests/CI** : effectués sur POSTMAN
 
 ---
 
