@@ -2,7 +2,6 @@
 import { api } from "@/lib/api";
 import type { AppointmentDTO, ListParams, PageResponse } from "../types/AppointmentsTypes";
 
-// Petit helper pour l'update 
 
 const stripMs = (iso?: string) => (iso ? iso.replace(/\.\d{3}Z$/, "Z") : undefined);
 function cleanPatch(patch: UpdateAppointmentBody): UpdateAppointmentBody {
@@ -25,7 +24,6 @@ function cleanPatch(patch: UpdateAppointmentBody): UpdateAppointmentBody {
   return out;
 }
 
-// serviceAppointments.ts
 
 export async function fetchAppointments(params: ListParams = {}): Promise<PageResponse<AppointmentDTO>> {
   const search = new URLSearchParams();

@@ -13,6 +13,7 @@ import PatientPicker from "@/features/appointements/services/PatientPickerAppoin
 import { Button } from "@/components/ui/ButtonUI";
 import { TextInput } from "@/components/ui/Input";
 
+// ----------------- utils -----------------
 const pad = (n: number) => String(n).padStart(2, "0");
 
 function toLocalInput(iso?: string | Date) {
@@ -34,65 +35,92 @@ function emptyToUndef(s?: string) {
   return s && s.trim() !== "" ? s : undefined;
 }
 
-interface AppointmentEditorProps {
+// ----------------- props discriminées -----------------
+type InitialCreate = {
+  mode: "create";
+  startsAt?: string;
+  endsAt?: string;
+  patientId?: string;
+  doctorId?: string;
+  reason?: string;
+  location?: string;
+  notes?: string;
+  status?: ApptStatus;
+};
+
+type InitialUpdate = {
+  mode: "update";
+  id: string; // identifiant du RDV à modifier
+  startsAt?: string;
+  endsAt?: string;
+  patientId?: string;
+  doctorId?: string;
+  reason?: string;
+  location?: string;
+  notes?: string;
+  status?: ApptStatus;
+};
+
+type BaseProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateAppointmentBody | UpdateAppointmentBody) => void;
-  initial?: {
-    mode?: "create" | "edit";
-    startsAt?: string;
-    endsAt?: string;
-    patientId?: string;
-    doctorId?: string;
-    reason?: string;
-    location?: string;
-    notes?: string;
-    status?: ApptStatus;
-  };
   userRole?: string;
   currentDoctorId?: string;
-}
+};
 
-export function AppointmentEditor({
-  open,
-  onClose,
-  onSubmit,
-  initial,
-  userRole,
-  currentDoctorId,
-}: AppointmentEditorProps) {
-  const mode = initial?.mode ?? "create";
-  const isCreate = mode === "create";
+type CreateProps = BaseProps & {
+  initial: InitialCreate;                          // ← mode create
+  onSubmit: (data: CreateAppointmentBody) => void; // ← submit create
+};
+
+type UpdateProps = BaseProps & {
+  initial: InitialUpdate;                                        // ← mode update
+  onSubmit: (id: string, patch: UpdateAppointmentBody) => void;  // ← submit update (id séparé)
+};
+
+export type AppointmentEditorProps = CreateProps | UpdateProps;
+
+// ----------------- composant -----------------
+export function AppointmentEditor(props: AppointmentEditorProps) {
+  const { open, onClose, userRole, currentDoctorId } = props;
+
+  const isCreate = props.initial.mode === "create";
   const isDoctor = userRole === "DOCTOR";
 
   // États du formulaire
-  const [doctorId, setDoctorId] = useState(initial?.doctorId ?? (isDoctor ? currentDoctorId : ""));
-  const [patientId, setPatientId] = useState(initial?.patientId ?? "");
-  const [startsAt, setStartsAt] = useState(() => toLocalInput(initial?.startsAt));
-  const [endsAt, setEndsAt] = useState(() => toLocalInput(initial?.endsAt));
-  const [reason, setReason] = useState(initial?.reason ?? "");
-  const [location, setLocation] = useState(initial?.location ?? "");
-  const [notes, setNotes] = useState(initial?.notes ?? "");
-  const [status, setStatus] = useState<ApptStatus>(initial?.status ?? "SCHEDULED");
+  const [doctorId, setDoctorId] = useState(
+    props.initial.doctorId ?? (isDoctor ? currentDoctorId ?? "" : "")
+  );
+  const [patientId, setPatientId] = useState(props.initial.patientId ?? "");
+  const [startsAt, setStartsAt] = useState(() => toLocalInput(props.initial.startsAt));
+  const [endsAt, setEndsAt] = useState(() => toLocalInput(props.initial.endsAt));
+  const [reason, setReason] = useState(props.initial.reason ?? "");
+  const [location, setLocation] = useState(props.initial.location ?? "");
+  const [notes, setNotes] = useState(props.initial.notes ?? "");
+  const [status, setStatus] = useState<ApptStatus>(props.initial.status ?? "SCHEDULED");
 
-  // Reset form when initial changes
+  // Reset propre : uniquement à l'ouverture, pas à chaque re-render parent
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    if (!initial) return;
-    setDoctorId(initial.doctorId ?? (isDoctor ? currentDoctorId : ""));
-    setPatientId(initial.patientId ?? "");
-    setStartsAt(toLocalInput(initial.startsAt));
-    setEndsAt(toLocalInput(initial.endsAt));
-    setReason(initial.reason ?? "");
-    setLocation(initial.location ?? "");
-    setNotes(initial.notes ?? "");
-    setStatus(initial.status ?? "SCHEDULED");
-  }, [initial, isDoctor, currentDoctorId]);
+    if (!open) { setHydrated(false); return; }
+    if (hydrated) return;
+
+    const init = props.initial;
+    setDoctorId(init.doctorId ?? (isDoctor ? currentDoctorId ?? "" : ""));
+    setPatientId(init.patientId ?? "");
+    setStartsAt(toLocalInput(init.startsAt));
+    setEndsAt(toLocalInput(init.endsAt));
+    setReason(init.reason ?? "");
+    setLocation(init.location ?? "");
+    setNotes(init.notes ?? "");
+    setStatus(init.status ?? "SCHEDULED");
+
+    setHydrated(true);
+  }, [open, hydrated, isDoctor, currentDoctorId, props.initial]);
 
   // Validation
   const hasRequired = useMemo(() => {
-    if (isCreate) {
-      return Boolean(patientId && doctorId && startsAt && endsAt);
-    }
+    if (isCreate) return Boolean(patientId && doctorId && startsAt && endsAt);
     return Boolean(startsAt && endsAt);
   }, [isCreate, patientId, doctorId, startsAt, endsAt]);
 
@@ -103,7 +131,7 @@ export function AppointmentEditor({
 
   const canSubmit = hasRequired && rangeValid;
 
-  // Close on Escape and lock scroll
+  // Close on Escape + lock scroll
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && open) onClose();
@@ -132,7 +160,8 @@ export function AppointmentEditor({
         notes: emptyToUndef(notes),
         status,
       };
-      onSubmit(payload);
+      // props est discriminé => TS sait que onSubmit attend un CreateAppointmentBody
+      (props as CreateProps).onSubmit(payload);
     } else {
       const patch: UpdateAppointmentBody = {
         startsAt: toApiISO(startsAt),
@@ -142,7 +171,8 @@ export function AppointmentEditor({
         notes: emptyToUndef(notes),
         status,
       };
-      onSubmit(patch);
+      const { id } = (props as UpdateProps).initial;
+      (props as UpdateProps).onSubmit(id, patch);
     }
   }
 
@@ -184,6 +214,7 @@ export function AppointmentEditor({
               </div>
             </div>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={onClose}
@@ -210,7 +241,7 @@ export function AppointmentEditor({
                 ) : (
                   <DoctorPicker
                     value={doctorId}
-                    onChange={setDoctorId}
+                    onChange={(id) => setDoctorId(id ?? "")}
                     required={!isDoctor}
                   />
                 )}
@@ -334,18 +365,10 @@ export function AppointmentEditor({
 
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t border-token">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-              >
+              <Button type="button" variant="outline" onClick={onClose}>
                 Annuler
               </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={!canSubmit}
-              >
+              <Button type="submit" variant="primary" disabled={!canSubmit}>
                 {isCreate ? "Créer le rendez-vous" : "Enregistrer les modifications"}
               </Button>
             </div>

@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/features/appointments/components/DoctorPicker.tsx
 import { useMemo, useState } from "react";
 import { useDebouncedValue } from "./hooksAppointments2";
-import { useDoctors } from "../../doctors/service/hooksDoctor"; 
-import type { DoctorLite } from "../../doctors/service/hooksDoctor";
+import { useDoctorsForPicker, type DoctorLite } from "../../doctors/service/hooksDoctor";
 
-// DoctorPicker.tsx
 export default function DoctorPicker({
   value, onChange, required, disabled, pageSize = 20, className,
   placeholder = "Rechercher un médecin…",
@@ -21,20 +18,34 @@ export default function DoctorPicker({
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const debouncedQ = useDebouncedValue(q, 250);
+  const cappedPageSize = Math.min(pageSize ?? 20, 100);
 
-  const { data, isLoading, isFetching } = useDoctors({
+  const query = {
     q: debouncedQ || undefined,
     page,
-    pageSize,
+    pageSize: cappedPageSize,
     orderBy: "lastName",
     order: "asc",
-  } as any);
+  } as any;
 
-  const selected = useMemo(() => data?.items?.find(d => d.id === value), [data, value]);
-  const meta = (data as any)?.meta ?? { page, pageSize, total: undefined as number | undefined };
+  const { data, isLoading, isFetching, isError, error } = useDoctorsForPicker(query);
+
+  // ✅ NEW: on mémorise le médecin choisi pour l'affichage, indépendant de la liste
+  const [picked, setPicked] = useState<DoctorLite | null>(null);
+
+  // On garde la logique "selected via liste" comme fallback si picked n'est pas encore défini
+  const selectedFromList = useMemo(() => data?.items?.find(d => d.id === value) ?? null, [data, value]);
+
+  const meta = (data as any)?.meta ?? { page, pageSize: cappedPageSize, total: undefined as number | undefined };
   const lastPage = meta.total
-    ? Math.max(1, Math.ceil(meta.total / (meta.pageSize || pageSize)))
-    : page + ((data?.items?.length ?? 0) === (meta.pageSize || pageSize) ? 1 : 0);
+    ? Math.max(1, Math.ceil(meta.total / (meta.pageSize || cappedPageSize)))
+    : page + ((data?.items?.length ?? 0) === (meta.pageSize || cappedPageSize) ? 1 : 0);
+
+    const display = picked && picked.id === value
+      ? `${picked.lastName?.toUpperCase?.() ?? ""} ${picked.firstName ?? ""}`.trim()
+      : selectedFromList
+        ? `${selectedFromList.lastName?.toUpperCase?.() ?? ""} ${selectedFromList.firstName ?? ""}`.trim()
+        : "";
 
   return (
     <div className={["flex flex-col gap-1", className].filter(Boolean).join(" ")}>
@@ -49,54 +60,72 @@ export default function DoctorPicker({
         />
         <input
           className="w-full rounded-xl border border-token px-3 py-2.5 bg-surface text-fg"
-          value={selected ? `${selected.lastName.toUpperCase()} ${selected.firstName}` : ""}
+          value={display}
           readOnly
           placeholder="Aucun sélectionné"
         />
       </div>
 
-      <div className="border border-token rounded-xl max-h-48 overflow-auto bg-surface">
-        {isLoading && <div className="p-2 text-sm text-fg">Chargement…</div>}
-        {!isLoading && (data?.items?.length ?? 0) === 0 && <div className="p-2 text-sm text-fg">Aucun résultat</div>}
-        <ul>
-          {data?.items?.map(d => {
-            const full = `${d.lastName.toUpperCase()} ${d.firstName}`;
-            const sub = d.email || d.id;
-            const active = d.id === value;
-            return (
-              <li key={d.id}
+      {isError && (
+        <div className="p-2 text-sm text-red-600 border border-red-400 rounded">
+          {(error as any)?.message ?? "Erreur lors du chargement des médecins."}
+        </div>
+      )}
+
+      {!isError && (
+        <div className="border border-token rounded-xl max-h-48 overflow-auto bg-surface">
+          {isLoading && <div className="p-2 text-sm text-fg">Chargement…</div>}
+          {!isLoading && (data?.items?.length ?? 0) === 0 && (
+            <div className="p-2 text-sm text-fg">Aucun résultat</div>
+          )}
+          <ul>
+            {data?.items?.map(d => {
+              const full = `${d.lastName.toUpperCase()} ${d.firstName}`;
+              const sub = d.email || d.id;
+              const active = d.id === value;
+              return (
+                <li
+                  key={d.id}
                   className={`px-3 py-2 cursor-pointer hover:bg-primary/5 ${active ? "bg-primary/10" : ""}`}
-                  onClick={() => onChange(d.id, d)}>
-                <div className="text-sm text-fg">{full}</div>
-                <div className="text-xs text-muted">{sub}</div>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+                  onClick={() => {
+                    setPicked(d);                 // ✅ mémorise localement
+                    onChange(d.id, d);            // remonte l'id au parent
+                  }}
+                >
+                  <div className="text-sm text-fg">{full}</div>
+                  <div className="text-xs text-muted">{sub}</div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 text-xs mt-1">
-        <button 
-          className="border border-token px-2 py-0.5 rounded hover:bg-primary/5 text-fg disabled:opacity-50" 
-          onClick={() => setPage(p => Math.max(1, p - 1))} 
-          disabled={meta.page! <= 1 || isFetching}
+        <button
+          type="button"
+          className="border border-token px-2 py-0.5 rounded hover:bg-primary/5 text-fg disabled:opacity-50"
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+          disabled={(meta as any).page! <= 1 || isFetching}
         >
           ◀
         </button>
         <span className="text-fg">Page {meta.page} / {lastPage}</span>
-        <button 
-          className="border border-token px-2 py-0.5 rounded hover:bg-primary/5 text-fg disabled:opacity-50" 
-          onClick={() => setPage(p => Math.min(lastPage, p + 1))} 
+        <button
+          type="button"
+          className="border border-token px-2 py-0.5 rounded hover:bg-primary/5 text-fg disabled:opacity-50"
+          onClick={() => setPage(p => Math.min(lastPage, p + 1))}
           disabled={isFetching}
         >
           ▶
         </button>
         {value && (
-          <button 
-            className="ml-auto text-xs underline text-primary" 
-            onClick={() => onChange(undefined)}
+          <button
+            type="button"
+            className="ml-auto text-xs underline text-primary"
+            onClick={() => { setPicked(null); onChange(undefined); }}
           >
-            Effacer
+          Effacer
           </button>
         )}
       </div>

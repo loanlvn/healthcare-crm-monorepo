@@ -5,8 +5,9 @@ import { createPatient } from '../services/servicePatients';
 import { Form } from '@/components/widget/Form';
 import { TextField } from '@/components/widget/TextField';
 import { Button } from '@/components/ui/ButtonUI';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useAuth } from '../../../store/auth';
+import DoctorPicker from '@/features/appointements/services/doctorPicker';
 
 type Input = {
   firstName: string;
@@ -18,7 +19,7 @@ type Input = {
   assuranceNumber?: string;
   doctorName?: string;
   notes?: string;
-  ownerId?: string; // ADMIN/SECRETARY
+  ownerId?: string; 
 };
 
 export default function PatientCreatePage() {
@@ -42,7 +43,7 @@ export default function PatientCreatePage() {
       assuranceNumber: '',
       doctorName: '',
       notes: '',
-      ownerId: isDoc ? user?.id : '', // doc: sera ignoré de toute façon par le back, mais permet d'afficher l’info
+      ownerId: isDoc ? user?.id : '',
     },
     mode: 'onTouched',
   });
@@ -59,12 +60,16 @@ export default function PatientCreatePage() {
         assuranceNumber: v.assuranceNumber,
         doctorName: v.doctorName,
         notes: v.notes,
-        ownerId: (isAdmin || isSec) ? (v.ownerId || '') : '', // Ensure ownerId is always a string
+        ownerId: (isAdmin || isSec) ? (v.ownerId || '') : (user?.id || ''), 
       };
       return createPatient(payload);
     },
     onSuccess: (created) => {
       qc.invalidateQueries({ queryKey: ['patients'] });
+      if (!created || !created.id) {
+        nav('/patients', { replace: true });
+        return;
+      }
       nav(`/patients/${created.id}`, { replace: true });
     },
     onError: async (e: any) => {
@@ -81,8 +86,10 @@ export default function PatientCreatePage() {
       <h1 className="text-lg font-semibold">Créer un patient</h1>
 
       {err && (
-        <div className="mb-2 rounded-xl border px-3 py-2 text-sm"
-             style={{ borderColor: 'var(--border)', background: 'color-mix(in oklab, var(--danger) 12%, transparent)', color: 'var(--danger)' }}>
+        <div
+          className="mb-2 rounded-xl border px-3 py-2 text-sm"
+          style={{ borderColor: 'var(--border)', background: 'color-mix(in oklab, var(--danger) 12%, transparent)', color: 'var(--danger)' }}
+        >
           {err}
         </div>
       )}
@@ -100,8 +107,31 @@ export default function PatientCreatePage() {
 
         {(isAdmin || isSec) ? (
           <div className="md:col-span-2">
-            <label className="text-xs block mb-1 text-muted">Owner (UUID médecin)</label>
-            <input className="input w-full" {...form.register('ownerId')} placeholder="UUID médecin" />
+            <label className="text-xs block mb-1 text-muted">Médecin propriétaire</label>
+            {/* 🔌 DoctorPicker relié à ownerId via Controller */}
+            <Controller
+              name="ownerId"
+              control={form.control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <DoctorPicker
+                  value={field.value}
+                  onChange={(id, doctor) => {
+                    field.onChange(id ?? '');
+                    // Optionnel: auto-remplir le champ d'affichage doctorName si vide
+                    const dn = form.getValues('doctorName');
+                    if (!dn && doctor) {
+                      form.setValue('doctorName', `${doctor.lastName?.toUpperCase?.() ?? ''} ${doctor.firstName ?? ''}`.trim(), { shouldDirty: true });
+                    }
+                  }}
+                  placeholder="Rechercher un médecin…"
+                  required
+                />
+              )}
+            />
+            {form.formState.errors.ownerId && (
+              <div className="mt-1 text-xs text-red-600">Sélectionne un médecin.</div>
+            )}
           </div>
         ) : (
           <div className="md:col-span-2 text-xs text-muted">

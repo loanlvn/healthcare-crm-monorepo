@@ -121,4 +121,18 @@
   .surface { background: var(--surface); }
   .border-token { border-color: var(--border); }
   .text-muted { color: var(--muted); }
+
+  .no-prefix::before,
+  .no-prefix::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  .no-prefix *::before,
+  .no-prefix *::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  
 }

@@ -6,7 +6,7 @@ import * as ctrl from './controllerDoctors';
 const r = Router();
 
 r.get('/specialties', ctrl.getSpecialties);
-r.get('/', rbac('USER_READ'), ctrl.getDoctors);
+r.get('/', ctrl.getDoctors);
 r.get('/:id', requireSelfOrAdmin, ctrl.getDoctorProfile);
 
 r.put('/:id/profile', requireSelfOrAdmin, ctrl.putDoctorProfile);

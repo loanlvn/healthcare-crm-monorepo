@@ -12,9 +12,9 @@ export const listDoctorsQuerySchema = z.object({
 export type ListDoctorsQuery = z.infer<typeof listDoctorsQuerySchema>;
 
 export const upsertProfileSchema = z.object({
-  specialties: z.array(z.string().trim().min(1)).min(1),
-  bio: z.string().trim().optional(),
-  phone: z.string().trim().optional(),
+  specialties: z.array(z.string().trim().min(1)).min(1).optional().default([]),
+  bio: z.string().trim().optional().nullable(),
+  phone: z.string().trim().optional().nullable(),
 });
 
 export type UpsertProfileDTO = z.infer<typeof upsertProfileSchema>;

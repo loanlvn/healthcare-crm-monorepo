@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// DashboardPage.tsx - Version améliorée avec hook2
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -37,6 +36,7 @@ import { NextAppointmentsWidget } from "@/components/ui/NextAppointmentsWidget";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/ButtonUI";
 import { TextInput } from "@/components/ui/Input";
+import type { CreateAppointmentBody } from "@/features/appointements/services/serviceAppointments2";
 
 // ------------------ Helpers ------------------
 const now = () => new Date();
@@ -59,13 +59,8 @@ function toISO(d: Date) {
 }
 
 function toLocal(d: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mi = pad(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  const localDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000));
+  return localDate.toISOString().slice(0, 16);
 }
 
 function fromLocal(s: string) {
@@ -100,9 +95,8 @@ export default function DashboardPage() {
       to: toISO(range.to),
       doctorId: isDoctor ? myDoctorId : doctorId,
       patientId,
-      q: quickSearch || undefined,
       page: 1,
-      pageSize: 500,
+      pageSize: 100,
     }),
     [range.from, range.to, isDoctor, myDoctorId, doctorId, patientId, quickSearch]
   );
@@ -131,7 +125,7 @@ export default function DashboardPage() {
       to: toISO(wEnd),
       doctorId: isDoctor ? myDoctorId : undefined,
       page: 1,
-      pageSize: 500,
+      pageSize: 100,
     }),
     [isDoctor, myDoctorId, wStart.getTime(), wEnd.getTime()]
   );
@@ -205,15 +199,24 @@ export default function DashboardPage() {
     }
   };
 
+  const editorInitial = useMemo(() => ({
+    mode: "create" as const,
+    startsAt: draft?.startsAt,
+    endsAt: draft?.endsAt,
+  }), [draft?.startsAt, draft?.endsAt]);
+
   return (
-    <motion.div 
+    <motion.div
       className="min-h-screen bg-background p-4 space-y-6"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
       {/* Header amélioré */}
-      <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-wrap items-center gap-4"
+      >
         <div className="flex items-center gap-3">
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -225,7 +228,12 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-fg">Tableau de bord</h1>
             <p className="text-sm text-muted">
-              {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString("fr-FR", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </p>
           </div>
         </div>
@@ -297,49 +305,68 @@ export default function DashboardPage() {
                   Fermer
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-fg">Période début</label>
+                  <label className="text-sm font-medium text-fg">
+                    Période début
+                  </label>
                   <input
                     type="datetime-local"
                     className="input"
                     value={toLocal(range.from)}
-                    onChange={(e) => setRange((r) => ({ ...r, from: fromLocal(e.target.value) }))}
+                    onChange={(e) =>
+                      setRange((r) => ({
+                        ...r,
+                        from: fromLocal(e.target.value),
+                      }))
+                    }
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-fg">Période fin</label>
+                  <label className="text-sm font-medium text-fg">
+                    Période fin
+                  </label>
                   <input
                     type="datetime-local"
                     className="input"
                     value={toLocal(range.to)}
-                    onChange={(e) => setRange((r) => ({ ...r, to: fromLocal(e.target.value) }))}
+                    onChange={(e) =>
+                      setRange((r) => ({ ...r, to: fromLocal(e.target.value) }))
+                    }
                   />
                 </div>
                 {!isDoctor && (
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-fg">Docteur ID</label>
+                    <label className="text-sm font-medium text-fg">
+                      Docteur ID
+                    </label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
                       <input
                         className="input pl-10"
                         placeholder="UUID du docteur"
                         value={doctorId ?? ""}
-                        onChange={(e) => setDoctorId(e.target.value || undefined)}
+                        onChange={(e) =>
+                          setDoctorId(e.target.value || undefined)
+                        }
                       />
                     </div>
                   </div>
                 )}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-fg">Patient ID</label>
+                  <label className="text-sm font-medium text-fg">
+                    Patient ID
+                  </label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
                     <input
                       className="input pl-10"
                       placeholder="UUID du patient"
                       value={patientId ?? ""}
-                      onChange={(e) => setPatientId(e.target.value || undefined)}
+                      onChange={(e) =>
+                        setPatientId(e.target.value || undefined)
+                      }
                     />
                   </div>
                 </div>
@@ -350,55 +377,63 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       {/* KPIs améliorés */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-        <KpiCard 
-          label="Total (7j)" 
-          value={stats.total} 
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4"
+      >
+        <KpiCard
+          label="Total (7j)"
+          value={stats.total}
           icon={<Users className="w-5 h-5" />}
           color="blue"
           trend={stats.total > 0 ? "positive" : "neutral"}
         />
-        <KpiCard 
-          label="Confirmés" 
-          value={stats.confirmed} 
+        <KpiCard
+          label="Confirmés"
+          value={stats.confirmed}
           icon={<UserCheck className="w-5 h-5" />}
           color="emerald"
           percentage={stats.completionRate}
         />
-        <KpiCard 
-          label="Planifiés" 
-          value={stats.scheduled} 
+        <KpiCard
+          label="Planifiés"
+          value={stats.scheduled}
           icon={<Clock className="w-5 h-5" />}
           color="amber"
         />
-        <KpiCard 
-          label="Annulés" 
-          value={stats.cancelled} 
+        <KpiCard
+          label="Annulés"
+          value={stats.cancelled}
           icon={<X className="w-5 h-5" />}
           color="rose"
           percentage={stats.cancellationRate}
         />
-        <KpiCard 
-          label="Terminés" 
-          value={stats.done} 
+        <KpiCard
+          label="Terminés"
+          value={stats.done}
           icon={<TrendingUp className="w-5 h-5" />}
           color="green"
         />
-        <KpiCard 
-          label="Taux de réalisation" 
-          value={`${stats.completionRate}%`} 
+        <KpiCard
+          label="Taux de réalisation"
+          value={`${stats.completionRate}%`}
           icon={<TrendingUp className="w-5 h-5" />}
           color="purple"
         />
       </motion.div>
 
       {/* Main grid: Calendar + Side */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 xl:grid-cols-3 gap-6"
+      >
         {/* Calendar */}
         <div className="xl:col-span-2">
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg text-fg">Calendrier des rendez-vous</h3>
+              <h3 className="font-semibold text-lg text-fg">
+                Calendrier des rendez-vous
+              </h3>
               <div className="flex items-center gap-2 text-sm text-muted">
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-full bg-blue-500"></div>
@@ -414,7 +449,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="rounded-xl overflow-hidden">
               <FullCalendar
                 ref={calendarRef}
@@ -444,9 +479,9 @@ export default function DashboardPage() {
                 }}
                 height={650}
                 eventTimeFormat={{
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  meridiem: false
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  meridiem: false,
                 }}
               />
             </div>
@@ -455,8 +490,8 @@ export default function DashboardPage() {
 
         {/* Side column */}
         <div className="space-y-6">
-          <NextAppointmentsWidget 
-            title="À venir cette semaine" 
+          <NextAppointmentsWidget
+            title="À venir cette semaine"
             pageSize={5}
             showViewAll={true}
           />
@@ -476,13 +511,9 @@ export default function DashboardPage() {
           setEditorOpen(false);
           setDraft(null);
         }}
-        initial={{
-          mode: "create",
-          startsAt: draft?.startsAt,
-          endsAt: draft?.endsAt,
-        }}
-        onSubmit={(body) => {
-          create.mutate(body);
+        initial={editorInitial}
+        onSubmit={(body: CreateAppointmentBody) => {
+          create.mutate(body)
           setEditorOpen(false);
           setDraft(null);
         }}

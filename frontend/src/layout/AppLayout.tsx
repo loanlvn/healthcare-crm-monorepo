@@ -1,10 +1,12 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../store/auth';
 import { cn } from '../lib/cn';
-import { LayoutDashboard, Users2, User2, CalendarClock, FileText, LogOut, Menu, X, Shield, MessageSquare } from 'lucide-react';
+import { 
+  LayoutDashboard, Users2, User2, CalendarClock, LogOut, 
+  Menu, X, Shield, MessageSquare, CreditCard, FileText
+} from 'lucide-react';
 import { useUnreadSummary } from '../features/chat/service/hooks2';
 import Avatar from '@/components/widget/Avatar';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +24,8 @@ export default function AppLayout() {
       { to: "/patients", icon: User2, label: "Patients" },
       { to: "/chat", icon: MessageSquare, label: "Messages" },
       { to: "/appointments", icon: CalendarClock, label: "Rendez-vous" },
-      { to: "/documents", icon: FileText, label: "Documents" },
+      { to: "/billing/invoices", icon: FileText, label: "Factures" },
+      { to: "/billing/payments", icon: CreditCard, label: "Paiements" },
     ];
     if (user?.role === "ADMIN" || user?.role === "SECRETARY") {
       base.splice(3, 0, { to: "/doctors", icon: Users2, label: "Médecins" });
@@ -111,10 +114,9 @@ function HeaderBar({ onOpenMenu, onLogout }: { onOpenMenu: () => void; onLogout:
 
 function MeCard() {
   const { user } = useAuth();
-  if (!user) return null;
-
+  
   const { data: me } = useQuery({
-    queryKey: ["me"],
+    queryKey: ["me", user?.id], 
     queryFn: () => api.get("users/me").json<{
       id: string;
       firstName: string;
@@ -126,19 +128,18 @@ function MeCard() {
       updatedAt?: string;
       avatarUrl?: string | null;
     }>(),
-    // évite les refetchs bruyants dans le layout
     staleTime: 60_000,
-    enabled: !!user, // seulement si connecté
+    enabled: !!user, 
   });
 
-  // 2) On choisit la source “la plus fraîche”
+  if (!user) return null;
+
   const profile = me ?? user;
 
-  // 3) Construction de la src pour l’avatar
   const ASSETS = import.meta.env.VITE_ASSETS_URL || "http://localhost:4000";
-  const avatarPath = profile.avatarUrl || undefined;         // ex: "/uploads/avatars/xxx.webp"
-  const version = profile.updatedAt || profile.createdAt || ""; // bust cache
-  const avatarSrc = avatarPath ? avatarPath : undefined;     // relatif -> Avatar le préfixera
+  const avatarPath = profile.avatarUrl || undefined;
+  const version = profile.updatedAt || profile.createdAt || "";
+  const avatarSrc = avatarPath ? avatarPath : undefined;
 
   return (
     <div className="card p-3">
@@ -149,8 +150,8 @@ function MeCard() {
         >
           <Avatar
             src={avatarSrc}
-            baseUrl={ASSETS}     // => "http://localhost:4000" + "/uploads/..."
-            bust={version}       // => ?v=...
+            baseUrl={ASSETS}
+            bust={version}
             size={32}
             rounded="full"
             withBorder={false}
@@ -190,8 +191,6 @@ function MeCard() {
     </div>
   );
 }
-
-
 
 function RoleBadge({ role }: { role: 'ADMIN'|'DOCTOR'|'SECRETARY' }) {
   const style = role === 'ADMIN'
@@ -235,7 +234,6 @@ function SidebarLink({ to, icon, label, badgeCount }: { to: string; icon: React.
   );
 }
 
-
 function MobileDrawer({
   open,
   onClose,
@@ -248,7 +246,6 @@ function MobileDrawer({
   const { user } = useAuth();
   return (
     <>
-      {/* Backdrop */}
       <div
         className={cn(
           'lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity',
@@ -256,7 +253,6 @@ function MobileDrawer({
         )}
         onClick={onClose}
       />
-      {/* Panel */}
       <div
         className={cn(
           'lg:hidden fixed inset-y-0 left-0 z-50 w-[82%] max-w-[300px] -translate-x-full surface border-r border-token flex flex-col transition-transform',

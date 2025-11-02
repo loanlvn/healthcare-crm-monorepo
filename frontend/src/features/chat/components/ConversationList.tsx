@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/ButtonUI';
-import { RoleBadge } from '@/components/ui/RoleBadge';
+import { motion, AnimatePresence } from "framer-motion";
+import { Card } from "@/components/ui/Card";
+import { RoleBadge } from "@/components/ui/RoleBadge";
 
 interface ConversationListProps {
-  conversations: any[]; // <- NormalizedConversation[]
+  conversations: any[];
   selected: string | null;
   onSelect: (id: string) => void;
   unreadCount: number;
@@ -21,67 +20,77 @@ export function ConversationList({
   hasNextPage,
   onLoadMore,
 }: ConversationListProps) {
-
   return (
-    <Card className="h-full flex flex-col">
-      {/* Header */}
-      <div className="pb-4 border-b border-token">
-        <h2 className="font-semibold text-lg mb-2">Conversations</h2>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted">Non lus:</span>
-          <motion.span key={unreadCount} initial={{ scale: 1.2 }} animate={{ scale: 1 }} className="font-semibold text-primary">
-            {unreadCount}
-          </motion.span>
-        </div>
+    <Card variant="ghost" elevation={0} className="h-full flex flex-col p-0 backdrop-blur-sm">
+
+      {/* Header compact */}
+      <div className="px-4 py-3 border-b border-token flex items-center justify-between">
+        <h2 className="font-semibold text-sm uppercase tracking-wide">Conversations</h2>
+        <motion.span
+          key={unreadCount}
+          initial={{ scale: 1.3 }}
+          animate={{ scale: 1 }}
+          className="text-primary font-medium text-sm"
+        >
+          {unreadCount}
+        </motion.span>
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-auto py-2">
-        <AnimatePresence>
-          {conversations.map((conversation, index) => (
-            <motion.div
-              key={conversation.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Button
-                variant={selected === conversation.id ? 'primary' : 'ghost'}
-                fullWidth
-                className="justify-start mb-2 h-auto py-3 px-4"
-                onClick={() => onSelect(conversation.id)}
+      {/* Liste */}
+      <div className="flex-1 overflow-y-auto">
+        <AnimatePresence initial={false}>
+          {conversations.map((c, i) => {
+            const active = selected === c.id;
+            return (
+              <motion.div
+                key={c.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.15, delay: i * 0.03 }}
               >
-                <div className="flex flex-col items-start text-left w-full">
-                  <div className="flex items-center gap-2 w-full mb-1">
-                    <RoleBadge role={conversation.primaryRole ?? (conversation.type === 'PATIENT' ? 'PATIENT' : 'DOCTOR')} />
-                    <span className="flex-1 truncate font-medium">
-                      {conversation.displayName}
-                    </span>
-                    {conversation.unreadCount > 0 && (
-                      <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {conversation.unreadCount}
+                <div
+                  onClick={() => onSelect(c.id)}
+                  className={[
+                    "px-4 py-3 cursor-pointer flex flex-col border-b border-token/50 transition",
+                    active
+                      ? "bg-[color:color-mix(in_oklab,var(--surface)_90%,transparent)]"
+                      : "hover:bg-[color:color-mix(in_oklab,var(--surface)_70%,transparent)]",
+                  ].join(" ")}
+                >
+                  <div className="flex items-center gap-2">
+                    <RoleBadge role={c.primaryRole ?? (c.type === "PATIENT" ? "PATIENT" : "DOCTOR")} />
+                    <span className="font-medium truncate flex-1">{c.displayName}</span>
+
+                    {c.unreadCount > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="bg-danger text-white text-xs rounded-full px-2 py-0.5"
+                      >
+                        {c.unreadCount}
                       </motion.span>
                     )}
                   </div>
 
-                  {conversation.lastMessagePreview && (
-                    <p className="text-xs text-muted truncate w-full">
-                      {conversation.lastMessagePreview}
-                    </p>
+                  {c.lastMessagePreview && (
+                    <span className="text-xs text-muted truncate mt-0.5">
+                      {c.lastMessagePreview}
+                    </span>
                   )}
                 </div>
-              </Button>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
 
         {hasNextPage && (
-          <div className="pt-2">
-            <Button variant="outline" fullWidth onClick={onLoadMore}>
-              Charger plus
-            </Button>
-          </div>
+          <button
+            onClick={onLoadMore}
+            className="w-full text-center text-xs py-3 text-muted hover:text-foreground transition"
+          >
+            Charger plus
+          </button>
         )}
       </div>
     </Card>

@@ -18,5 +18,5 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src", "prisma" ,"server.ts", "app.ts", "config", "scripts"]
+  "include": ["src", "prisma" ,"server.ts", "app.ts", "config", "scripts"],
 }

@@ -50,3 +50,18 @@ export async function sendPasswordChangedMail(to: string) {
         html
     });
 }
+
+export async function sendPaymentLinkEmail(to: string, url: string, amountLabel: string) {
+  const html = `
+  <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:auto;">
+    <h2>Paiement en ligne de la consultation</h2>
+    <p>Pour régler le montant de <strong>${amountLabel}</strong>, cliquez sur le bouton ci-dessous afin de payer en toute sécurité via Stripe :</p>
+    <p style="text-align:center;margin:24px 0;">
+      <a href="${url}" style="background:#635bff;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;display:inline-block;">
+        Payer maintenant
+      </a>
+    </p>
+    <p>La page de paiement est sécurisée (Stripe), compatible mobile et desktop.</p>
+  </div>`;
+  await mailer.sendMail({ to, subject: "Lien de paiement sécurisé", html, from: MAIL_FROM });
+}

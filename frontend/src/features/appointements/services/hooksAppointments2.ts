@@ -15,6 +15,7 @@ const keys = {
 };
 
 export function useListAppointments(params: ListParams) {
+  
   return useQuery<PageResponse<AppointmentDTO>, any>({
     queryKey: keys.list(params),
     queryFn: () => fetchAppointments(params),

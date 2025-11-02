@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import AppLayout from "../layout/AppLayout";
 import { AdminOnly, Protected } from "../router/ProtectedRoute";
-
 import LoginPage from "../features/auth/pages/LoginPage";
 import MePage from "../features/users/pages/MePage";
 import UserDetailPage from "../features/users/pages/UserDetailPage";
@@ -19,13 +18,32 @@ import PatientCreatePage from "@/features/patients/pages/PatientCreatePage";
 import PatientDetailPage from "@/features/patients/pages/PatientsDetailPage";
 import PatientsEditPage from "@/features/patients/pages/PatientsEditPage";
 import PatientsListPage from "@/features/patients/pages/PatientsListPage";
-// import ChatPage from "@/features/chat/pages/ChatPage";
 import ConversationsPage from "@/features/chat/pages/ConversationPage3";
 
-// ⚡️ Nouvelles pages (lazy)
-const DashboardPage = lazy(() => import("@/features/dasboard/page/DashboardPage"));
-const AppointmentsPage = lazy(() => import("@/features/appointements/pages/AppointmentsPage2"));
-const AppointmentDetailPage = lazy(() => import("@/features/appointements/pages/AppointmentDetailPage"));
+const DashboardPage = lazy(
+  () => import("@/features/dasboard/page/DashboardPage")
+);
+const AppointmentsPage = lazy(
+  () => import("@/features/appointements/pages/AppointmentsPage2")
+);
+const AppointmentDetailPage = lazy(
+  () => import("@/features/appointements/pages/AppointmentDetailPage")
+);
+const InvoicesPage = lazy(
+  () => import("@/features/billing/pages/InvoicesPage")
+);
+const InvoiceDetailPage = lazy(
+  () => import("@/features/billing/pages/InvoiceDetailPage")
+);
+const NewInvoicePage = lazy(
+  () => import("@/features/billing/pages/NewInvoicePage")
+);
+const PaymentsPage = lazy(
+  () => import("@/features/billing/pages/PaymentsPage")
+);
+const NewPaymentPage = lazy(
+  () => import("@/features/billing/pages/NewPaymentPage")
+);
 
 const Fallback = <div className="p-6 text-sm text-muted">Chargement…</div>;
 
@@ -182,6 +200,60 @@ export const router = createBrowserRouter([
         element: (
           <Protected>
             <ConversationsPage />
+          </Protected>
+        ),
+      },
+
+      // Billing — Invoices
+      {
+        path: "/billing/invoices",
+        element: (
+          <Protected>
+            <Suspense fallback={Fallback}>
+              <InvoicesPage />
+            </Suspense>
+          </Protected>
+        ),
+      },
+      {
+        path: "/billing/invoices/:id",
+        element: (
+          <Protected>
+            <Suspense fallback={Fallback}>
+              <InvoiceDetailPage />
+            </Suspense>
+          </Protected>
+        ),
+      },
+      {
+        path: "/billing/new-invoice",
+        element: (
+          <Protected>
+            <Suspense fallback={Fallback}>
+              <NewInvoicePage />
+            </Suspense>
+          </Protected>
+        ),
+      },
+
+      // Billing — Payments
+      {
+        path: "/billing/payments",
+        element: (
+          <Protected>
+            <Suspense fallback={Fallback}>
+              <PaymentsPage />
+            </Suspense>
+          </Protected>
+        ),
+      },
+      {
+        path: "/billing/new-payment",
+        element: (
+          <Protected>
+            <Suspense fallback={Fallback}>
+              <NewPaymentPage />
+            </Suspense>
           </Protected>
         ),
       },

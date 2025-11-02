@@ -38,3 +38,4 @@ export type PageMeta = {
 };
 
 export type PageResponse<T> = { items: T[]; meta: PageMeta };
+

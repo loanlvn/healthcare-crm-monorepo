@@ -8,6 +8,7 @@ import { authAccess } from "./middlewares/auth";
 import chatRoutes from "./modules/messages/chat/routerChat";
 import { enforceMustChangePassword } from "./middlewares/mustChangePassword";
 import appointmentRouter from "./modules/appointments/routerAppointment";
+import { billingRouter } from "./modules/billing/routerBilling";
 
 
 const router = Router()
@@ -18,5 +19,5 @@ router.use('/patients', authAccess, enforceMustChangePassword, patientRouter);
 router.use('/doctors', authAccess, enforceMustChangePassword, doctorRouter);
 router.use('/conversations',authAccess, chatRoutes);
 router.use('/appointments', authAccess, enforceMustChangePassword, appointmentRouter);
-
+router.use('/billing', authAccess, enforceMustChangePassword,  billingRouter);
 export default router;

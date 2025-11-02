@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 export type DoctorProfile = {
   phone?: string | null;
   bio?: string | null;
-  specialties?: string[]; // toujours un array côté UI
+  specialties?: string[];
 };
 
 export type DoctorDTO = {
@@ -39,7 +39,6 @@ export type ListParams = {
 // ---------- Normalisations ----------
 
 function pickProfile(x: any): DoctorProfile | null {
-  // Accepte les trois variantes renvoyées par le back ou d'anciens formats
   const dp = x?.DoctorProfile ?? x?.doctorProfile ?? x?.profile ?? null;
   if (!dp) return null;
   const specialties = Array.isArray(dp.specialties) ? dp.specialties : [];
@@ -60,7 +59,6 @@ function normalizeOne(x: any): DoctorDTO {
   };
 }
 
-// Normalise une réponse de liste (peu importe les clés réelles du back)
 function normalizeList(resp: any): PageResponse<DoctorDTO> {
   const items =
     Array.isArray(resp?.items)
@@ -84,38 +82,61 @@ function normalizeList(resp: any): PageResponse<DoctorDTO> {
   };
 }
 
-// ---------- API calls (KY correct) ----------
+// ---------- API calls corrigées ----------
 
 export async function fetchDoctors(params: ListParams): Promise<PageResponse<DoctorDTO>> {
   try {
-    const raw = await api.get("doctors", { searchParams: params }).json<any>();
-    return normalizeList(raw);
+    console.log('🔍 fetchDoctors called with params:', params);
+    
+    // Nettoyer les paramètres undefined/null
+    const cleanParams: Record<string, string> = {};
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        cleanParams[key] = String(value);
+      }
+    });
+
+    const searchParams = new URLSearchParams(cleanParams);
+    const url = `doctors?${searchParams}`;
+    console.log('🔍 fetchDoctors URL:', url);
+
+    const response = await api.get(url).json<any>();
+    console.log('🔍 fetchDoctors response:', response);
+    
+    return normalizeList(response);
   } catch (e: any) {
-    // ky lève une HTTPError; on neutralise le 403 pour ne pas polluer la console/UX
-    const status = e?.response?.status ?? (e?.name === "HTTPError" ? 500 : undefined);
+    console.error(' fetchDoctors error:', e);
+    
+    const status = e?.response?.status;
     if (status === 403) {
+      console.warn(' Access forbidden to doctors API, returning empty list');
       return {
         items: [],
         meta: {
           page: Number(params.page ?? 1),
-          pageSize: Number(params.pageSize ?? 0),
+          pageSize: Number(params.pageSize ?? 20),
           total: 0,
           hasNextPage: false,
           hasPreviousPage: false,
         },
       };
     }
-    throw e; 
+    
+    throw e;
   }
 }
 
-
 export async function fetchDoctorById(id: string): Promise<DoctorDTO> {
-  // /doctors/:id renvoie l’objet avec "DoctorProfile"
-  const raw = await api.get(`doctors/${id}`).json<any>();
-  return normalizeOne(raw);
+  try {
+    const raw = await api.get(`doctors/${id}`).json<any>();
+    return normalizeOne(raw);
+  } catch (e: any) {
+    console.error(` fetchDoctorById error for id ${id}:`, e);
+    throw e;
+  }
 }
 
+// ... reste du code inchangé
 export async function fetchDoctorSpecialties(): Promise<string[]> {
   // /doctors/specialties renvoie string[] (déjà distinct/trié côté back)
   const raw = await api.get("doctors/specialties").json<any>();

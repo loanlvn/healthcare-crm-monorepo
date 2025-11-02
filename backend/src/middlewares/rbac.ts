@@ -25,3 +25,4 @@ export const rbac = (...actions: Action[]): RequestHandler => (req, res, next) =
   if (!actions.every(a => allowed.includes(a))) return res.status(403).json({error: 'FORBIDDEN'});
   next();
 };
+

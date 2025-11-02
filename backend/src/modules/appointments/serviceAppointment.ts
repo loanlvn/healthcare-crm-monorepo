@@ -4,6 +4,9 @@ import { AppStatusEnum, AppointmentDTO } from "./dto";
 import { forbidden, unauthenticated } from "../../utils/appError";
 import z from "zod";
 import { ReminderService } from "./reminder/serviceReminder";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { mailer } from "../../mailer/mailer";
 
 type Role = "ADMIN" | "DOCTOR" | "SECRETARY";
 
@@ -117,42 +120,49 @@ async function assertNoConflicts(
 
 // --------- Notification (stub) ----------
 export const NotificationService = {
-  // À brancher sur ton mailer/in-app
-  async sendAppointmentReminder(apptId: string) {
-    // Récupère minimal pour templating
-    const a = await prisma.appointment.findUnique({
-      where: { id: apptId },
+  async sendAppointmentReminder(appointmentId: string) {
+    // charge RDV + patient + docteur
+    const appt = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
       include: {
-        patient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true /*, email: true*/,
-          },
-        },
-        doctor: { select: { id: true, firstName: true, lastName: true } },
+        patient: true,
+        doctor: true,
       },
     });
-    if (!a) {
-      const e: any = new Error("APPOINTMENT_NOT_FOUND");
-      e.status = 404;
-      throw e;
+    if (!appt) throw new Error("Appointment not found");
+
+    if (!appt.patient?.email) {
+      throw new Error("Patient email missing");
     }
 
-    // TODO: remplace par ton vrai mailer
-    // const to = a.patient?.email;
-    // if (to) await mailer.send({ to, subject: "...", html: "..." });
+    const startsAt = appt.startsAt;
+    const dateStr = format(startsAt, "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr });
+    const doctorName = appt.doctor ? `${appt.doctor.firstName} ${appt.doctor.lastName}` : "votre praticien";
+    const manageUrl = `${process.env.FRONTEND_URL ?? "http://localhost:5173"}/appointments/${appt.id}`;
 
-    // TODO: in-app
-    // await inApp.notify(a.patientId, 'APPT_REMINDER', { appointmentId: a.id, startsAt: a.startsAt });
+    const subject = `Rappel de rendez-vous — ${dateStr}`;
+    const html = `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;">
+        <h2 style="margin:0 0 12px">Rappel de votre consultation</h2>
+        <p>Bonjour ${appt.patient.firstName ?? ""} ${appt.patient.lastName ?? ""},</p>
+        <p>Nous vous rappelons votre rendez-vous ${dateStr} avec ${doctorName}.</p>
+        ${appt.location ? `<p>Lieu : <strong>${appt.location}</strong></p>` : ""}
+        ${appt.notes ? `<p style="white-space:pre-wrap;">Notes : ${appt.notes}</p>` : ""}
+        <p style="margin-top:16px">
+          <a href="${manageUrl}" style="display:inline-block;padding:10px 14px;border-radius:8px;border:1px solid #ddd;text-decoration:none">
+            Voir / gérer le rendez-vous
+          </a>
+        </p>
+        <p style="color:#666;margin-top:16px">Si vous ne pouvez pas venir, merci de nous prévenir dès que possible.</p>
+      </div>
+    `;
 
-    // Pour l’instant, on log seulement (pas d’IO externe obligatoire ici)
-    console.log(
-      `[reminder] RDV ${a.id} patient=${a.patientId} doctor=${
-        a.doctorId
-      } ${a.startsAt.toISOString()}`
-    );
-    return { ok: true };
+    await mailer.sendMail({
+      from: process.env.MAIL_FROM!,
+      to: appt.patient.email,
+      subject,
+      html,
+    });
   },
 };
 
@@ -357,7 +367,6 @@ async update(
     }
   }
 
-  // --- recalcul des bornes même si un seul bord change ---
   const nextStarts = patch.startsAt ? new Date(patch.startsAt) : prev.startsAt;
   const nextEnds   = patch.endsAt   ? new Date(patch.endsAt)   : prev.endsAt;
 
@@ -367,7 +376,6 @@ async update(
     throw e;
   }
 
-  // --- vérif conflits si au moins une borne change ---
   if (patch.startsAt || patch.endsAt) {
     await assertNoConflicts(prev.doctorId, prev.patientId, nextStarts, nextEnds, prev.id);
   }
@@ -388,14 +396,13 @@ async update(
     },
   });
 
-  // --- rappels : cancel si statut terminal, sinon replanifie si date modifiée ---
   if (["CANCELLED", "DONE", "NO_SHOW"].includes(updated.status as any)) {
     await ReminderService.cancelForAppointment(updated.id);
   } else if (patch.startsAt || patch.endsAt) {
     await ReminderService.upsertForAppointment(updated.id, updated.startsAt);
   }
 
-  return toDTO(updated); // <- oui, on renvoie bien le DTO
+  return toDTO(updated); 
 },
 
   async cancel(user: CurrentUser, id: string) {

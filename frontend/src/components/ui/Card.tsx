@@ -1,83 +1,21 @@
-/* src/components/ui/Card.tsx */
-import type {
-  HTMLAttributes,
-  ReactNode,
-  ElementType,
-  ForwardRefExoticComponent,
-  RefAttributes,
-  JSX
-} from "react";
-import { forwardRef } from "react";
-import { cn } from "../../lib/cn";
-
+import { forwardRef, type ElementType, type PropsWithChildren, type ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
 type Variant = "solid" | "soft" | "ghost";
-type Elevation = 0 | 1 | 2 | 3;
 
-type BaseProps = HTMLAttributes<HTMLDivElement> & {
+type BaseProps = PropsWithChildren<{
   as?: ElementType;
+  className?: string;
   variant?: Variant;
-  elevation?: Elevation;
+  elevation?: 0 | 1 | 2 | 3;
   hoverable?: boolean;
   interactive?: boolean;
   inset?: boolean;
   loading?: boolean;
   header?: ReactNode;
   footer?: ReactNode;
-};
+}>;
 
-// ---- Subcomponents props (clairement typés) ----
-type HeaderProps = {
-  title?: ReactNode;
-  subtitle?: ReactNode;
-  actions?: ReactNode;
-  className?: string;
-};
-type BodyProps = { children: ReactNode; className?: string };
-type FooterProps = { children: ReactNode; className?: string };
-type SkeletonProps = { lines?: number; className?: string };
-
-// ---- Card component type avec membres statiques ----
-type CardComponent = ForwardRefExoticComponent<BaseProps & RefAttributes<HTMLDivElement>> & {
-  Header: (p: HeaderProps) => JSX.Element;
-  Body: (p: BodyProps) => JSX.Element;
-  Footer: (p: FooterProps) => JSX.Element;
-  Skeleton: (p: SkeletonProps) => JSX.Element;
-};
-
-// ---- Implémentations des sous-composants ----
-function CardHeader({ title, subtitle, actions, className }: HeaderProps) {
-  return (
-    <div className={cn("flex items-center justify-between", className)}>
-      <div>
-        {title && <div className="font-semibold">{title}</div>}
-        {subtitle && <div className="text-sm text-muted">{subtitle}</div>}
-      </div>
-      {actions}
-    </div>
-  );
-}
-function CardBody({ children, className }: BodyProps) {
-  return <div className={cn("space-y-2", className)}>{children}</div>;
-}
-function CardFooter({ children, className }: FooterProps) {
-  return <div className={cn("mt-3 pt-2 border-t border-token", className)}>{children}</div>;
-}
-function CardSkeleton({ lines = 3, className }: SkeletonProps) {
-  return (
-    <div className={cn("animate-pulse space-y-2", className)}>
-      {Array.from({ length: lines }).map((_, i) => (
-        <div
-          key={i}
-          className="h-3 rounded bg-[color:color-mix(in_oklab,var(--surface)_85%,var(--border))]"
-          style={{ width: `${80 - i * 10}%` }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ---- Composant principal ----
 const CardBase = forwardRef<HTMLDivElement, BaseProps>(function Card(
   {
     as,
@@ -97,21 +35,41 @@ const CardBase = forwardRef<HTMLDivElement, BaseProps>(function Card(
 ) {
   const Comp: ElementType = as ?? "div";
 
+  // Fonds translucides basés sur --surface (harmonisé light/dark)
   const bg =
-    variant === "solid" ? "bg-white/90" : variant === "soft" ? "bg-white/60" : "bg-transparent";
-  const border = variant === "ghost" ? "border-transparent" : "border-token";
+    variant === "solid"
+      ? "bg-[color:color-mix(in_oklab,var(--surface)_95%,transparent)]"
+      : variant === "soft"
+      ? "bg-[color:color-mix(in_oklab,var(--surface)_82%,transparent)]"
+      : // ghost = le plus transparent, mais lisible
+        "bg-[color:color-mix(in_oklab,var(--surface)_68%,transparent)]";
+
+  // Bordures cohérentes avec le design system
+  const border =
+    variant === "ghost"
+      ? "border-[color:color-mix(in_oklab,var(--border)_60%,transparent)]"
+      : "border-token";
+
+  // Ombres (utilise tes tokens Tailwind/Shadow actuels)
   const shadow =
     elevation === 0 ? "shadow-none" : elevation === 1 ? "shadow-sm" : elevation === 2 ? "shadow" : "shadow-lg";
+
+  // Hover subtil, dépendant du variant
+  const hover =
+    hoverable &&
+    (variant === "ghost"
+      ? "transition hover:bg-[color:color-mix(in_oklab,var(--surface)_74%,transparent)]"
+      : "transition hover:bg-[color:color-mix(in_oklab,var(--surface)_88%,transparent)]");
 
   return (
     <Comp
       ref={ref}
       className={cn(
-        "rounded-2xl border backdrop-blur",
+        "rounded-2xl border backdrop-blur", // retire 'backdrop-blur' si tu ne veux aucun flou
         bg,
         border,
         shadow,
-        hoverable && "transition hover:bg-white/70",
+        hover,
         interactive && "cursor-pointer focus:outline-none focus:ring-2 focus:ring-[color:var(--primary)]/40",
         inset ? "p-3" : "p-3.5",
         className
@@ -119,18 +77,28 @@ const CardBase = forwardRef<HTMLDivElement, BaseProps>(function Card(
       {...rest}
     >
       {header && <div className="mb-2 flex items-center justify-between">{header}</div>}
-
       {loading ? <CardSkeleton lines={4} /> : children}
-
       {footer && <div className="mt-3 pt-2 border-t border-token">{footer}</div>}
     </Comp>
   );
 });
 
-// ---- Assemblage avec Object.assign et typage final ----
-export const Card: CardComponent = Object.assign(CardBase, {
-  Header: CardHeader,
-  Body: CardBody,
-  Footer: CardFooter,
-  Skeleton: CardSkeleton,
-});
+function CardSkeleton({ lines = 3 }: { lines?: number }) {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: lines }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "h-4 animate-pulse rounded",
+            i === 0 ? "w-4/5" : i === lines - 1 ? "w-2/3" : "w-full",
+            "bg-[color:color-mix(in_oklab,var(--surface-contrast)_14%,transparent)]"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+export const Card = Object.assign(CardBase, { Skeleton: CardSkeleton });
+export default Card;

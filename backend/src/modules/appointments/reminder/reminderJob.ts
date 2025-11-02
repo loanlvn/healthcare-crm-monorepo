@@ -1,25 +1,25 @@
+// src/features/appointments/jobs/reminderJob.ts
 import { prisma } from "../../../infra/prisma";
 import { ReminderService } from "../reminder/serviceReminder";
 import { NotificationService } from "../serviceAppointment";
 
 export function startReminderJob() {
+  // toutes les 5 minutes
   const INTERVAL_MS = 5 * 60 * 1000;
-
   let interval: NodeJS.Timeout | null = null;
   let initialTimeout: NodeJS.Timeout | null = null;
 
   async function tick() {
     const now = new Date();
 
+    // on envoie tous les rappels planifiés dont scheduledAt <= maintenant et encore en PENDING
     const due = await prisma.appointmentReminder.findMany({
       where: {
         status: "PENDING",
         scheduledAt: { lte: now },
-        appointment: { status: { in: ["SCHEDULED", "CONFIRMED"] as any } },
       },
-      select: { id: true, appointmentId: true },
       orderBy: { scheduledAt: "asc" },
-      take: 100,
+      take: 50,
     });
 
     for (const r of due) {
@@ -27,19 +27,19 @@ export function startReminderJob() {
         await NotificationService.sendAppointmentReminder(r.appointmentId);
         await ReminderService.markSent(r.id);
       } catch (err) {
-        console.error("[reminder] fail", r.id, err);
         await ReminderService.markFailed(r.id, err);
       }
     }
   }
 
+  // aligne le tick sur la minute/intervalle
   const delay = INTERVAL_MS - (Date.now() % INTERVAL_MS);
   initialTimeout = setTimeout(() => {
-    tick();
-    interval = setInterval(tick, INTERVAL_MS);
+    tick().catch(console.error);
+    interval = setInterval(() => tick().catch(console.error), INTERVAL_MS);
   }, delay);
 
-  // ← IMPORTANT : retourne un stop() pour le shutdown
+  // retourne un stop() pour l’arrêt propre du serveur
   return () => {
     if (initialTimeout) clearTimeout(initialTimeout);
     if (interval) clearInterval(interval);

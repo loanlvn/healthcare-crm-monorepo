@@ -12,7 +12,6 @@ import {
 import type { AppointmentDTO } from "../types/AppointmentsTypes";
 import { type UpdateAppointmentBody } from "../services/serviceAppointments2";
 import { fetchPatientById } from "@/features/patients/services/servicePatients";
-import { fetchDoctorById } from "@/features/doctors/service/doctors";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
   ArrowLeft,
@@ -32,8 +31,8 @@ function fmt(dt?: string) {
   return d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
 }
 function fullName(p?: { firstName?: string | null; lastName?: string | null } | null) {
-  if (!p) return "—";
-  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "—";
+  if (!p) return "";
+  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim();
 }
 
 export default function AppointmentDetailPage() {
@@ -50,20 +49,39 @@ export default function AppointmentDetailPage() {
 
   const appt = data as AppointmentDTO | undefined;
 
-  // ---- Chargement des fiches complètes (patient & docteur) ----
+  // ---- Patient (OK pour tous) ----
   const { data: fullPatient } = useQuery({
     enabled: !!appt?.patientId,
     queryKey: ["patient", appt?.patientId],
     queryFn: () => fetchPatientById(appt!.patientId),
     staleTime: 10_000,
+    retry: 1,
   });
 
-  const { data: fullDoctor } = useQuery({
-    enabled: !!appt?.doctorId,
-    queryKey: ["doctor", appt?.doctorId],
-    queryFn: () => fetchDoctorById(appt!.doctorId),
-    staleTime: 10_000,
-  });
+  // ---- IMPORTANT : on NE CHARGE PAS le docteur par id (pas de fetchDoctorById) ----
+  // On dérive un libellé affichable UNIQUEMENT à partir du contenu du rendez-vous.
+  const doctorLabel = useMemo(() => {
+    if (!appt) return "—";
+    // 1) si le DTO contient déjà un objet docteur peuplé
+    const byObj = fullName((appt as any).doctor);
+    if (byObj) return byObj;
+    // 2) si le backend a mis des champs à plat (au cas où)
+    const fn = (appt as any).doctorFirstName ?? "";
+    const ln = (appt as any).doctorLastName ?? "";
+    const flat = `${fn} ${ln}`.trim();
+    if (flat) return flat;
+    // 3) fallback : l'ID du docteur
+    return appt.doctorId ?? "—";
+  }, [appt]);
+
+  // Spécialités : seulement si présentes dans l'objet déjà inclus
+  const doctorSpecialties = useMemo(() => {
+    const prof = (appt as any)?.doctor?.doctorProfile;
+    if (Array.isArray(prof?.specialties) && prof.specialties.length > 0) {
+      return prof.specialties.join(", ");
+    }
+    return ""; // pas d'affichage si vide
+  }, [appt]);
 
   const canCancel = useMemo(() => {
     if (!appt) return false;
@@ -85,7 +103,7 @@ export default function AppointmentDetailPage() {
   if (!appt) return <div className="p-4">Consultation introuvable.</div>;
 
   const onQuickUpdate = (body: UpdateAppointmentBody) => {
-    update.mutate(body); // ton hook attend directement le patch
+    update.mutate(body); // patch direct
   };
 
   return (
@@ -163,7 +181,7 @@ export default function AppointmentDetailPage() {
           </div>
         </section>
 
-        {/* Carte médecin */}
+        {/* Carte médecin (sans fetch par id) */}
         <section className="rounded-2xl border p-4">
           <h3 className="font-semibold mb-2 flex items-center gap-2">
             <Stethoscope size={16} /> Médecin
@@ -173,18 +191,20 @@ export default function AppointmentDetailPage() {
               {appt.doctorId ? (
                 isAdminSec ? (
                   <Link className="hover:underline" to={`/doctors/${appt.doctorId}`}>
-                    {fullName(fullDoctor) || fullName(appt.doctor) || appt.doctorId}
+                    {doctorLabel}
                   </Link>
                 ) : (
-                  <span>{fullName(fullDoctor) || fullName(appt.doctor) || appt.doctorId}</span>
+                  <span>{doctorLabel}</span>
                 )
               ) : (
                 "—"
               )}
             </div>
-            <div className="text-sm text-muted-foreground">
-              {(fullDoctor?.doctorProfile?.specialties ?? []).join(", ") || "—"}
-            </div>
+            {doctorSpecialties ? (
+              <div className="text-sm text-muted-foreground">{doctorSpecialties}</div>
+            ) : (
+              <div className="text-sm text-muted-foreground">—</div>
+            )}
           </div>
         </section>
 
