@@ -41,25 +41,22 @@ static async create(req: Request, res: Response) {
     // 1) Charge la facture
     const inv = await tx.invoice.findUnique({
       where: { id: data.invoiceId },
-      select: { id: true, total: true }, // le statut n'est pas nécessaire pour décider
+      select: { id: true, total: true }, 
     });
     if (!inv) return res.status(404).json({ code: "INVOICE_NOT_FOUND" });
 
-    // 2) Somme déjà payée (Decimal)
     const agg = await tx.payment.aggregate({
       where: { invoiceId: inv.id },
       _sum: { amount: true },
     });
     const already = new Prisma.Decimal(agg._sum.amount ?? 0);
     const total  = new Prisma.Decimal(inv.total);
-    const rest   = total.sub(already);              // Decimal sécurisé
+    const rest   = total.sub(already);              
 
-    // 3) Blocage métier: déjà soldée ?
     if (rest.lte(0)) {
       return res.status(400).json({ code: "INVOICE_ALREADY_PAID" });
     }
 
-    // 4) Montant demandé & overpayment
     const amount = new Prisma.Decimal(data.amount);
     if (amount.lte(0)) {
       return res.status(400).json({ code: "AMOUNT_INVALID" });
@@ -71,7 +68,6 @@ static async create(req: Request, res: Response) {
       });
     }
 
-    // 5) Création du paiement
     const p = await tx.payment.create({
       data: {
         invoice: { connect: { id: inv.id } },

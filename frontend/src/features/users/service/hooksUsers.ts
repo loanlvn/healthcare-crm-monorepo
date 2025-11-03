@@ -20,18 +20,12 @@ export type UsersPickResult = {
 
 type Params = { q?: string; role?: RolePick; page?: number; limit?: number };
 
-/**
- * useUserPicker — liste les utilisateurs internes
- * - role = "ALL" (défaut) -> tous les rôles
- * - role = "ADMIN" | "DOCTOR" | "SECRETARY" -> filtre serveur
- * - q, page, limit -> pagination/recherche
- */
+
 export function useUserPicker(params: Params = {}): UseQueryResult<UsersPickResult> {
   const q = params.q ?? "";
   const page = params.page ?? 1;
   const limit = params.limit ?? 20;
 
-  // "ALL" => pas de filtre côté API
   const roleParam =
     params.role && params.role !== "ALL"
       ? (params.role as Exclude<RolePick, "ALL">) // "ADMIN" | "DOCTOR" | "SECRETARY"
@@ -52,9 +46,6 @@ export function useUserPicker(params: Params = {}): UseQueryResult<UsersPickResu
   });
 }
 
-/** Pratique : hook spécialisé pour "tous les internes" */
 export function useAllInternals(opts?: { q?: string; page?: number; limit?: number }) {
   return useUserPicker({ role: "ALL", ...opts });
 }
-
-

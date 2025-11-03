@@ -3,8 +3,7 @@ import { AppError, forbidden } from "../../../utils/appError";
 import { prisma } from "../../../infra/prisma";
 import type { DirectoryQuery } from "./dto";
 
-// --------- helpers cursor ----------
-type Cursor = { createdAt: string; id: string };
+// helpers
 
 function isAdmin(role: Role) {
   return role === "ADMIN";
@@ -36,7 +35,7 @@ export async function ensureDoctorOwnsPatientOrAdmin(
       id: patientId,
       OR: [
         { ownerId: userId },
-        { doctors: { some: { doctorId: userId } } }, // table PatientDoctor (m2m)
+        { doctors: { some: { doctorId: userId } } }, 
       ],
     },
     select: { id: true },
@@ -44,7 +43,7 @@ export async function ensureDoctorOwnsPatientOrAdmin(
   if (!owned) throw new AppError(403, "NOT_PATIENT_OWNER");
 }
 
-// --------- guards ----------
+// guards
 export async function assertParticipant(
   conversationId: string,
   userId: string
@@ -56,7 +55,7 @@ export async function assertParticipant(
   if (!exists) throw new AppError(403, "NOT_PARTICIPANT");
 }
 
-// --------- service API ----------
+// API
 export const ChatService = {
   async createConversation(
     currentUser: { id: string; role: Role },
@@ -75,23 +74,20 @@ export const ChatService = {
       const participantIds = Array.from(
         new Set([currentUser.id, ...(body.participantIds ?? [])])
       );
-      // 1) Cherche une conv où tous les participants demandés sont présents
       const candidates = await prisma.conversation.findMany({
         where: {
           type: "INTERNAL",
-          participants: { every: { userId: { in: participantIds } } }, // tous les attendus présents
+          participants: { every: { userId: { in: participantIds } } }, 
         },
         select: { id: true, _count: { select: { participants: true } } },
         take: 10,
       });
 
-      // 2) Filtre côté code pour s’assurer qu’il n’y a PAS de participants en plus
       const exact = candidates.find(
         (c) => c._count.participants === participantIds.length
       );
-      if (exact) return { id: exact.id }; // <-- réutilise, pas de doublon
+      if (exact) return { id: exact.id }; 
 
-      // 3) Sinon, créer
       const conv = await prisma.conversation.create({
         data: {
           type: "INTERNAL",
@@ -161,7 +157,7 @@ export const ChatService = {
     const limit = Math.max(1, Math.min(q.pageSize ?? 15, 100));
 
     const where: any = {
-      participants: { some: { userId: currentUser.id } }, // même pour admin (badge cohérent)
+      participants: { some: { userId: currentUser.id } }, 
     };
     if (q.type) where.type = q.type;
     if (q.patientId) where.patientId = q.patientId;
@@ -182,13 +178,12 @@ export const ChatService = {
           take: 1,
           select: { content: true, createdAt: true },
         },
-        // ✅ inclure l'utilisateur lié au participant
+        // inclure l'utilisateur lié au participant
         participants: {
           select: {
             userId: true,
             lastReadAt: true,
             user: {
-              // <-- ajout
               select: {
                 id: true,
                 firstName: true,
@@ -204,7 +199,6 @@ export const ChatService = {
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
 
-    // unread par conversation (exclut mes messages)
     const convIds = items.map((i) => i.id);
     let unreadByConv: { conversationId: string; count: bigint }[] = [];
     if (convIds.length > 0) {
@@ -244,7 +238,6 @@ export const ChatService = {
         lastMessageAt: i.lastMessageAt ?? i.createdAt,
         lastMessagePreview: i.messages[0]?.content ?? null,
         unreadCount: mapUnread.get(i.id) ?? 0,
-        // ✅ renvoyer les participants avec l'user imbriqué
         participants: i.participants.map((p) => ({
           userId: p.userId,
           lastReadAt: p.lastReadAt,
@@ -263,7 +256,7 @@ export const ChatService = {
   },
 
   async getConversation(currentUser: { id: string; role: Role }, id: string) {
-    await ensureParticipantOrAdmin(id, currentUser.id, currentUser.role); // <- bypass ADMIN
+    await ensureParticipantOrAdmin(id, currentUser.id, currentUser.role); 
     return prisma.conversation.findUnique({
       where: { id },
       include: {
@@ -272,7 +265,6 @@ export const ChatService = {
             userId: true,
             lastReadAt: true,
             user: {
-              // <-- ajout
               select: { id: true, firstName: true, lastName: true, role: true },
             },
           },
@@ -372,10 +364,8 @@ export const ChatService = {
     if (!conv) throw forbidden("CONVERSATION_NOT_FOUND");
 
     if (conv.type === "INTERNAL") {
-      // ADMIN bypass sinon participant requis
       await ensureParticipantOrAdmin(conv.id, currentUser.id, currentUser.role);
     } else {
-      // PATIENT: ADMIN bypass, sinon doctor propriétaire/collab
       await ensureDoctorOwnsPatientOrAdmin(
         currentUser.id,
         currentUser.role,
@@ -401,7 +391,6 @@ export const ChatService = {
       },
     });
 
-    // metadata conversation
     await prisma.conversation.update({
       where: { id: conv.id },
       data: { lastMessageAt: new Date() },
@@ -464,7 +453,6 @@ export const ChatService = {
     };
   },
 
-  // QoL: envoi direct 1-to-1 interne (crée conv si besoin)
   async sendDirect(
     currentUser: { id: string; role: Role },
     recipientUserId: string,

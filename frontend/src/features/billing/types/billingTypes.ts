@@ -19,7 +19,7 @@ export type InvoiceItem = {
   label: string;
   qty: number;
   unitPrice: number;
-  taxRate?: number; // 0..1 (ex: 0.23)
+  taxRate?: number;
 };
 
 export type InvoiceListItem = {

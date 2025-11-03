@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { rbac } from '../../middlewares/rbac';
 import { requireSelfOrAdmin } from '../../middlewares/guards'; 
 import * as ctrl from './controllerDoctors';
 

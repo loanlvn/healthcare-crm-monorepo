@@ -4,22 +4,18 @@ import { TextInput, PasswordInput } from '../ui/Input';
 import { cn } from '../../lib/cn';
 
 type Props = {
-  /** chemin RHF, ex: "email" */
   name: string;
   label?: string;
-  description?: string;   // (ex-hint)
+  description?: string;   
   required?: boolean;
   value?: any;
   helper?: string;
 
-  /** icônes décoratives */
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
 
-  /** type HTML ; "password" active l’eye-toggle natif */
   type?: React.HTMLInputTypeAttribute;
 
-  /** props HTML passés à l’input */
   placeholder?: string;
   autoComplete?: string;
   disabled?: boolean;
@@ -65,7 +61,6 @@ export function TextField({
             invalid={invalid}
             disabled={disabled}
             leftIcon={leftIcon}
-            // le PasswordInput gère son eye-toggle en rightIcon ; on garde ton rightIcon si tu veux le cumuler
             autoComplete={autoComplete ?? 'current-password'}
             className={className}
           />

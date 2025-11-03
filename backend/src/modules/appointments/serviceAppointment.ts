@@ -101,7 +101,6 @@ async function assertNoConflicts(
   });
 
   if (candidates.length) {
-    // Double-check en mémoire (robuste)
     const clash = candidates.find((c) =>
       overlaps(c.startsAt, c.endsAt, startsAt, endsAt)
     );
@@ -252,7 +251,7 @@ export const AppointmentsService = {
       throw e;
     }
 
-    // Vérifie existences (simple)
+    // Vérifie existence patient + doctor
     const [patientExists, doctorExists] = await Promise.all([
       prisma.patient.findUnique({
         where: { id: body.patientId },
@@ -346,7 +345,6 @@ async update(
     throw e;
   }
 
-  // --- machine à états (optionnel mais conseillé) ---
   type AppStatus = z.infer<typeof AppStatusEnum>;
   function canTransition(from: AppStatus, to: AppStatus) {
     const map: Record<AppStatus, AppStatus[]> = {

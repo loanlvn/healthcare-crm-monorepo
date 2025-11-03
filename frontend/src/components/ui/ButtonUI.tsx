@@ -57,9 +57,6 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   ref
 ) {
   const base = variantMap[variant];
-
-  // pour éviter le "layout shift" quand on passe en loading :
-  // on réserve l'espace des icônes avec des spans "invisible" si absents.
   
   const showRight = !!rightIcon || !!loading;
 
@@ -82,7 +79,6 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
         ) : leftIcon ? (
           leftIcon
         ) : (
-          // réserve l'espace pour éviter le shift
           <span className="invisible">•</span>
         )}
       </span>
@@ -109,12 +105,10 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
     iconOnly ? iconOnlySizeMap[size] : sizeMap[size],
     fullWidth && 'w-full justify-center',
     'disabled:opacity-60 disabled:cursor-not-allowed',
-    // état pressed (toggle) → data attribut pour styliser si besoin
     className
   );
 
   if (asSpan) {
-    // Rare: rendu "span" jouant le rôle de bouton, si nécessaire (modals, menus…)
     return (
       <span
         role="button"

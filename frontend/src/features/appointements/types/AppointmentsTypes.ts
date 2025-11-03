@@ -1,4 +1,3 @@
-// src/features/appointments/types.ts
 export type Role = "ADMIN" | "DOCTOR" | "SECRETARY";
 
 export type ApptStatus = "SCHEDULED" | "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "DONE";
@@ -29,6 +28,13 @@ export type ListParams = {
   patientId?: string;
   page?: number;
   pageSize?: number;
+};
+
+export type ListResponse<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
 };
 
 export type PageMeta = {

@@ -88,7 +88,7 @@ export async function applySettlement(tx: Prisma.TransactionClient, invoiceId: s
     if (!paidAt) paidAt = new Date();
   } else if (paid.gt(0)) {
     status = "PARTIALLY_PAID";
-    // on ne force pas paidAt ici
+    // force pas paidAt ici
   } else {
     status = "SENT";
     paidAt = null;
@@ -98,7 +98,6 @@ export async function applySettlement(tx: Prisma.TransactionClient, invoiceId: s
     where: { id: invoiceId },
     data: {
       status,
-      // si schema.paidAt est nullable: undefined = ne touche pas, null = efface
       paidAt: paidAt ?? undefined,
     },
   });
@@ -115,7 +114,6 @@ export async function recalcInvoiceStatus(tx: Prisma.TransactionClient, invoiceI
   const total = Number(inv.total);
   const paid = inv.payments.reduce((sum, p) => sum + Number(p.amount), 0);
   
-  // Utilisez une tolérance pour les arrondis
   const tolerance = 0.01;
   let status: InvoiceStatus = inv.status;
   let paidAt: Date | null = inv.paidAt;

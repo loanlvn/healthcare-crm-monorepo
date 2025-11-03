@@ -1,4 +1,3 @@
-// modules/users/controller.ts
 import type { Request, Response } from 'express';
 import { createUserSchema, updateUserSchema, listUsersQuerySchema } from './dto';
 import * as svc from './serviceUser';
@@ -34,8 +33,6 @@ export async function getUsers(req: Request, res: Response) {
   const out = await svc.listUsers(q);
   return res.json(out);
 }
-
-// Note: deleteUser not implemented yet
 
 export async function putDisableUser(req: Request, res: Response) {
   const out = await svc.disableUser(req.user!.role, req.params.id);

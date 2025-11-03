@@ -82,13 +82,11 @@ function normalizeList(resp: any): PageResponse<DoctorDTO> {
   };
 }
 
-// ---------- API calls corrigées ----------
+// API
 
 export async function fetchDoctors(params: ListParams): Promise<PageResponse<DoctorDTO>> {
   try {
-    console.log('🔍 fetchDoctors called with params:', params);
     
-    // Nettoyer les paramètres undefined/null
     const cleanParams: Record<string, string> = {};
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -98,14 +96,11 @@ export async function fetchDoctors(params: ListParams): Promise<PageResponse<Doc
 
     const searchParams = new URLSearchParams(cleanParams);
     const url = `doctors?${searchParams}`;
-    console.log('🔍 fetchDoctors URL:', url);
 
     const response = await api.get(url).json<any>();
-    console.log('🔍 fetchDoctors response:', response);
     
     return normalizeList(response);
   } catch (e: any) {
-    console.error(' fetchDoctors error:', e);
     
     const status = e?.response?.status;
     if (status === 403) {
@@ -136,9 +131,7 @@ export async function fetchDoctorById(id: string): Promise<DoctorDTO> {
   }
 }
 
-// ... reste du code inchangé
 export async function fetchDoctorSpecialties(): Promise<string[]> {
-  // /doctors/specialties renvoie string[] (déjà distinct/trié côté back)
   const raw = await api.get("doctors/specialties").json<any>();
   if (Array.isArray(raw)) return raw;
   if (typeof raw === "string") {
@@ -156,16 +149,14 @@ export async function fetchDoctorSpecialties(): Promise<string[]> {
   return [];
 }
 
-// ---------- Mises à jour ----------
 function emptyToNull(s?: string | null) {
   if (s == null) return null;
   const t = String(s).trim();
   return t === "" ? null : t;
 }
 function normSpecialties(arr?: string[] | null): string[] | undefined {
-  if (!arr) return undefined;                  // n’envoie pas la clé si elle est absente
+  if (!arr) return undefined; 
   const cleaned = arr.map(s => String(s).trim()).filter(Boolean);
-  // Si ton back refuse [] (array vide), alors retourne undefined quand aucune valeur
   return cleaned.length ? cleaned : undefined;
 } 
 
@@ -178,12 +169,11 @@ export async function updateDoctorProfile(
     const payload = {
       phone: emptyToNull(body.phone),
       bio: emptyToNull(body.bio),
-      specialties: normSpecialties(body.specialties), // string[] | undefined
+      specialties: normSpecialties(body.specialties),
     };
     const raw = await api.put(`doctors/${id}/profile`, { json: payload }).json<any>();
     return normalizeOne(raw);
   } catch (e: any) {
-    // aide au debug : affiche la vraie erreur renvoyée par l'API
     if (e?.name === "HTTPError" && e.response) {
       try {
         const msg = await e.response.json();
@@ -196,7 +186,7 @@ export async function updateDoctorProfile(
   }
 }
 
-// ---------- Utils ----------
+// utils aide
 
 export function toSpecialtyArray(input?: string): string[] {
   if (!input) return [];

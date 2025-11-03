@@ -15,8 +15,8 @@ import { Button } from '../../../components/ui/ButtonUI';
 import PasswordStrength from '../../../components/widget/PasswordStrenght';
 
 const schema = z.object({
-  firstName: z.string().min(1, 'Required'),
-  lastName: z.string().min(1, 'Required'),
+  firstName: z.string().min(2, 'At least 2 characters'),
+  lastName: z.string().min(2, 'At least 2 characters'),
   email: z.string().email('Invalid email'),
   role: z.enum(['ADMIN','DOCTOR','SECRETARY']),
   password: z.string()
@@ -54,7 +54,6 @@ export default function UserCreatePage() {
 
   async function onSubmit(v: Input) {
     const created = await createUser(v);
-    // backend met mustChangePassword=true automatiquement
     nav(`/users/${created.id}`, { replace: true });
   }
 

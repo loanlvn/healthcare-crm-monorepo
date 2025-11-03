@@ -36,16 +36,15 @@ export async function disableUser(id: string) {
   return api.put(`users/${id}/disable`).json<User>();
 }
 
-// service upload avatar
 
 export async function uploadMyAvatar(file: File) {
   const fd = new FormData();
-  fd.append('file', file); // DOIT s'appeler "file"
+  fd.append('file', file); 
 
-  const API = import.meta.env.VITE_API_URL; // ex: http://localhost:4000/api
+  const API = import.meta.env.VITE_API_URL; 
   const res = await authFetch(`${API}/users/me/avatar`, {
     method: 'POST',
-    body: fd, // surtout pas de Content-Type manuel
+    body: fd,
   });
 
   if (!res.ok) {

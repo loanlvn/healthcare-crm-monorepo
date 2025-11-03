@@ -13,14 +13,14 @@ import { useAuth } from '../../../store/auth';
 type Input = {
   firstName: string;
   lastName: string;
-  birthDate?: string; // YYYY-MM-DD
+  birthDate?: string; 
   phone?: string;
   email?: string;
   address?: string;
   assuranceNumber?: string;
   doctorName?: string;
   notes?: string;
-  ownerId?: string; // admin/secretary seulement
+  ownerId?: string; 
 };
 
 export default function PatientEditPage() {
@@ -54,7 +54,6 @@ export default function PatientEditPage() {
     mode: 'onTouched',
   });
 
-  // Pré-remplir quand la data arrive
   useEffect(() => {
     const p = q.data;
     if (!p) return;
@@ -68,7 +67,7 @@ export default function PatientEditPage() {
       assuranceNumber: p.assuranceNumber ?? '',
       doctorName: p.doctorName ?? '',
       notes: p.notes ?? '',
-      ownerId: (isAdmin || isSec) ? (p.ownerId ?? '') : '', // DOCTOR ne touche pas à ownerId
+      ownerId: (isAdmin || isSec) ? (p.ownerId ?? '') : '', 
     });
   }, [q.data]);
 
@@ -77,7 +76,7 @@ export default function PatientEditPage() {
       const payload: Input = {
         firstName: v.firstName,
         lastName: v.lastName,
-        birthDate: v.birthDate?.trim() || '', // '' -> backend = undefined
+        birthDate: v.birthDate?.trim() || '', 
         phone: v.phone,
         email: v.email,
         address: v.address,

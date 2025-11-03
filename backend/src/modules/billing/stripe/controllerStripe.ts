@@ -25,14 +25,12 @@ static async create(req: Request, res: Response) {
         if (!email) {
           return res.status(400).json({ error: "email is required when sendEmail=true" });
         }
-        // ⬇️ ISOLER l’envoi e-mail pour éviter le 500 global
+        // ISOLER l’envoi e-mail pour éviter le 500 global
         try {
           await sendPaymentLinkEmail(email, session.url!, formatEUR(outstanding));
-          // Succès silencieux (comportement actuel du front)
           return res.status(204).end();
         } catch (mailErr) {
           console.error("sendPaymentLinkEmail failed:", mailErr);
-          // Variante A (recommandée): on informe le front, mais on ne casse pas
           return res.status(200).json({
             url: session.url,
             amount: outstanding,
@@ -42,7 +40,6 @@ static async create(req: Request, res: Response) {
         }
       }
 
-      // cas normal: on renvoie l’URL pour redirection client
       return res.json({
         url: session.url,
         sessionId: session.id,
@@ -74,7 +71,6 @@ static async create(req: Request, res: Response) {
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Vérification d'idempotence
     try {
       await prisma.stripeEventLog.create({ data: { eventId: event.id } });
     } catch {

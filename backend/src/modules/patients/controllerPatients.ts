@@ -1,4 +1,3 @@
-// modules/patients/controllerPatients.ts
 import type { Request, Response } from 'express';
 import { listPatients, getPatient, createPatient, updatePatient, deletePatient } from './service';
 import { createPatientSchema, listPatientsQuerySchema, updatePatientSchema } from './dto';

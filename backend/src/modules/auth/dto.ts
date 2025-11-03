@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// ── LOGIN ──────────────────────────────────────────────
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -24,7 +23,6 @@ export const loginResponseSchema = z.object({
 });
 export type LoginResponseDTO = z.infer<typeof loginResponseSchema>;
 
-// ── REFRESH ────────────────────────────────────────────
 export const refreshSchema = z.object({
   refreshToken: z.string().min(10),
 });
@@ -37,13 +35,11 @@ export const refreshResponseSchema = z.object({
 });
 export type RefreshResponseDTO = z.infer<typeof refreshResponseSchema>;
 
-// ── LOGOUT ─────────────────────────────────────────────
 export const logoutSchema = z.object({
   refreshToken: z.string().min(10),
 });
 export type LogoutDTO = z.infer<typeof logoutSchema>;
 
-// ──  CHANGE PASSWORD ───────────────────────────────────
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(6, "Current password required"),
   newPassword: z
@@ -57,7 +53,6 @@ export const changePasswordSchema = z.object({
 
 export type ChangePasswordDTO = z.infer<typeof changePasswordSchema>;
 
-// ── RESET PASSWORD ────────────────────────────────────
 export const forgotRequestSchema = z.object({
   email: z.string().email(),
 });

@@ -1,4 +1,3 @@
-// modules/users/service.ts
 import { prisma } from '../../infra/prisma';
 import bcrypt from 'bcryptjs';
 import { conflict, forbidden, notFound, unauthorized } from '../../utils/appError'
@@ -14,7 +13,7 @@ const safeSelect = {
 export async function createUser(adminId: string, dto: {
   email: string; password: string; firstName: string; lastName: string; role: 'ADMIN'|'DOCTOR'|'SECRETARY'; isActive?: boolean;
 }) {
-  // (optionnel) empêcher qu’un non-admin arrive ici
+// empêcher qu’un non-admin arrive ici  
   const admin = await prisma.user.findUnique({ where: { id: adminId } });
   if (!admin || admin.role !== 'ADMIN') throw forbidden('FORBIDDEN');
 
@@ -48,7 +47,6 @@ export async function updateUser(actorId: string, id: string, dto: {
   }
 
   if (dto.role === 'ADMIN' || dto.role === 'DOCTOR' || dto.role === 'SECRETARY') {
-    // ok, c'est contrôlé par la condition ci-dessus
   }
 
   const data: any = { ...dto };

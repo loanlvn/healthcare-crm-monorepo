@@ -1,4 +1,3 @@
-// middlewares/mustChangePassword.ts
 import type { Request, Response, NextFunction } from 'express';
 import { forbidden } from '../utils/appError';
 

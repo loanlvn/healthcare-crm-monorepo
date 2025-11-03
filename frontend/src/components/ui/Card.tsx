@@ -35,26 +35,22 @@ const CardBase = forwardRef<HTMLDivElement, BaseProps>(function Card(
 ) {
   const Comp: ElementType = as ?? "div";
 
-  // Fonds translucides basés sur --surface (harmonisé light/dark)
   const bg =
     variant === "solid"
       ? "bg-[color:color-mix(in_oklab,var(--surface)_95%,transparent)]"
       : variant === "soft"
       ? "bg-[color:color-mix(in_oklab,var(--surface)_82%,transparent)]"
-      : // ghost = le plus transparent, mais lisible
+      : 
         "bg-[color:color-mix(in_oklab,var(--surface)_68%,transparent)]";
 
-  // Bordures cohérentes avec le design system
   const border =
     variant === "ghost"
       ? "border-[color:color-mix(in_oklab,var(--border)_60%,transparent)]"
       : "border-token";
 
-  // Ombres (utilise tes tokens Tailwind/Shadow actuels)
   const shadow =
     elevation === 0 ? "shadow-none" : elevation === 1 ? "shadow-sm" : elevation === 2 ? "shadow" : "shadow-lg";
 
-  // Hover subtil, dépendant du variant
   const hover =
     hoverable &&
     (variant === "ghost"
@@ -65,7 +61,7 @@ const CardBase = forwardRef<HTMLDivElement, BaseProps>(function Card(
     <Comp
       ref={ref}
       className={cn(
-        "rounded-2xl border backdrop-blur", // retire 'backdrop-blur' si tu ne veux aucun flou
+        "rounded-2xl border backdrop-blur", 
         bg,
         border,
         shadow,

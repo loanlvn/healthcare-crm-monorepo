@@ -247,7 +247,6 @@ export default function MePage() {
       </div>
     );
 
-  // URL absolue pour servir les assets depuis :4000
   const ASSETS = import.meta.env.VITE_ASSETS_URL || "http://localhost:4000";
 
   // Calcule la source finale de l'avatar (preview local > chemin API)
@@ -262,8 +261,8 @@ export default function MePage() {
         <aside className="card p-4 md:p-5 space-y-4">
           <Avatar
             src={avatarSrc}
-            baseUrl={ASSETS} // rend absolu si src commence par "/"
-            bust={version}   // ajoute ?v=...
+            baseUrl={ASSETS} 
+            bust={version}  
             initials={`${me.firstName?.[0] ?? ""}${me.lastName?.[0] ?? ""}`}
             size={64}
             rounded="2xl"

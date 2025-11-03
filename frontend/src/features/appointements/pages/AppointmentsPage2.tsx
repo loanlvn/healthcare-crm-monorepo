@@ -1,4 +1,3 @@
-// src/features/appointments/pages/AppointmentsPage.tsx
 import { useAuth } from "@/store/auth";
 import AdminAppointmentsPage from "../pages/AdminAppointmentsPage";
 import DoctorAppointmentsPage from "../pages/DoctorAppointmentsPage";

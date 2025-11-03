@@ -1,4 +1,3 @@
-// SecretaryAppointmentsPage.tsx — refonte UI alignée sur AdminAppointmentsPage
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,14 +11,10 @@ import { AppointmentsTable } from "../components/AppointmentsTable";
 import { AppointmentsFilters } from "../components/AppointmentsFilter";
 import { Pager } from "../components/PragerAppointments";
 
-// Pickers
 import DoctorPicker from "@/features/appointements/services/doctorPicker";
 import PatientPicker from "@/features/appointements/services/PatientPickerAppointments";
 
-// Utils dates
 import { toISO, toLocalInput } from "../services/utilsAppointments";
-
-// Icons
 import { Calendar, Plus, Users, Filter, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function SecretaryAppointmentsPage() {
@@ -227,10 +222,6 @@ export default function SecretaryAppointmentsPage() {
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/*               Formulaire de création côté SECRÉTAIRE                      */
-/* -------------------------------------------------------------------------- */
 
 function SecretaryCreateAppointmentForm({
   onSubmit,

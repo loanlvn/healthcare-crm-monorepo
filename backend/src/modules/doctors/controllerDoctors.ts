@@ -1,4 +1,3 @@
-// modules/doctors/controllerDoctors.ts
 import { Request, Response } from 'express';
 import { listDoctorsQuerySchema, upsertProfileSchema } from './dto';
 import * as svc from './serviceDoctor';

@@ -1,4 +1,3 @@
-// src/modules/users/avatar/serviceAvatar.ts
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { prisma } from '../../../infra/prisma';
@@ -17,7 +16,7 @@ export async function saveUserAvatar(userId: string, image: Buffer, ext: 'webp')
 
   await fs.writeFile(abs, image);
 
-  // URL publique servie par express.static('/uploads')
+  // URL publique express.static('/uploads')
   const publicUrl = `/uploads/avatars/${filename}`;
 
   // Récup ancien avatar pour cleanup si local

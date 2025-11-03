@@ -1,4 +1,3 @@
-// components/ui/AppointmentTable.tsx
 import { useEffect, useMemo, useState } from "react";
 import {
   useDeleteAppointment,
@@ -15,7 +14,7 @@ import type {
 import { StatusBadge } from "./StatusBadge";
 import { AppointmentEditor } from "../../features/appointements/pages/AppointmentEditor";
 
-/* ---------- Helpers date ---------- */
+// Helpers date 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 function toLocalInput(iso?: string | Date) {
@@ -281,7 +280,7 @@ export function AppointmentsTable({ initial }: { initial?: Partial<ListParams> }
   );
 }
 
-/* ---------- Formatters ---------- */
+// Formatters 
 function fullName(
   x?: { firstName?: string | null; lastName?: string | null } | null
 ) {

@@ -29,7 +29,6 @@ export default function PatientsListPage() {
     staleTime: 10_000,
   });
 
-  // pour la liste des docteurs (pour filtre et assignation dans les pages de formulaire)
   const doctorsQuery = useQuery({
     queryKey: ['doctors', { q: '', specialty: '', page: 1, pageSize: 100 }],
     queryFn: () => fetchDoctors({ page: 1, pageSize: 100, orderBy: 'lastName', order: 'asc' }),

@@ -1,4 +1,3 @@
-// AdminAppointmentsPage.tsx — refonte UI (tokens index.css + style DoctorPicker)
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -228,9 +227,6 @@ export default function AdminAppointmentsPage() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                    Formulaire de création côté ADMIN                       */
-/* -------------------------------------------------------------------------- */
 
 function AdminCreateAppointmentForm({
   onSubmit,

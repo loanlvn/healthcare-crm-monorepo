@@ -25,7 +25,6 @@ export default function ConversationsPage() {
     [conversations.data]
   );
 
-  // ✅ Auto-select : 1ère conversation lorsqu'on a des données et rien de sélectionné
   useEffect(() => {
     if (!selectedConversationId && flattenedConversations.length > 0) {
       setSelectedConversationId(flattenedConversations[0].id);
@@ -53,9 +52,8 @@ export default function ConversationsPage() {
     <div className="h-[calc(100vh-3rem)] bg-background px-4 md:px-6 py-4 md:py-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto h-full">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 h-full min-h-0">
-          {/* Colonne gauche : min-h-0 pour que la liste ne pousse pas l'ensemble */}
           <div className="lg:col-span-1 min-h-0 flex flex-col gap-4 md:gap-6">
-            {/* Formulaire (auto-height) */}
+            {/* Formulaire */}
             <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
               <CreateConversationForm onCreate={handleCreateConversation} isCreating={ensureState.isPending} />
             </motion.div>

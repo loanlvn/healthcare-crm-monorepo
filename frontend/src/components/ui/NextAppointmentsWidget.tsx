@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { useListAppointments } from "../../features/appointements/services/hooksAppointments";
+import { useListAppointments } from "../../features/appointements/services/hooksAppointments2";
 import type {
   ListParams,
   ListResponse,
   AppointmentDTO,
-} from "../../features/appointements/services/serviceAppointments";
+} from "../../features/appointements/types/AppointmentsTypes";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 
 export function NextAppointmentsWidget({

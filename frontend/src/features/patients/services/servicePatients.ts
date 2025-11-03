@@ -62,12 +62,12 @@ export type CreatePatientDTO = {
   assuranceNumber?: string | null;
   doctorName?: string | null;
   notes?: string | null;
-  ownerId: string; // <- on le garde dans le type UI mais on NE L’ENVOIE PAS
+  ownerId: string; 
 };
 
 export type UpdatePatientDTO = Partial<CreatePatientDTO>;
 
-// ----------------- helpers -----------------
+// helpers 
 
 function cleanParams<T extends Record<string, any>>(params: T): Partial<T> {
   return Object.fromEntries(
@@ -90,7 +90,6 @@ function emptyToUndef<T extends Record<string, any>>(obj: T): Partial<T> {
   return out as Partial<T>;
 }
 
-// Normalise la date de naissance à "YYYY-MM-DD" ou omet le champ
 function normalizeBirthDate(s?: string | null) {
   if (!s) return undefined;
   const t = s.trim();
@@ -100,7 +99,6 @@ function normalizeBirthDate(s?: string | null) {
   return m ? `${m[1]}-${m[2]}-${m[3]}` : undefined;
 }
 
-// Optionnel: remonter un message lisible en dev
 async function throwWithDetails(e: any) {
   if (e?.name === 'HTTPError' && e.response) {
     try {
@@ -115,7 +113,7 @@ async function throwWithDetails(e: any) {
   throw e;
 }
 
-// ----------------- API -----------------
+// API
 
 export async function fetchPatients(params: PatientsQuery) {
   const cp = cleanParams(params);
@@ -126,28 +124,33 @@ export async function fetchPatientById(id: string) {
   return api.get(`patients/${id}`).json<Patient>();
 }
 
-export async function createPatient(payload: CreatePatientDTO) {
+export async function createPatient(payload: any) {
   try {
-    // on enlève ownerId (souvent interdit côté back) + champs vides
-    const {
-      ownerId: _omitOwner, 
-      birthDate,
-      ...rest
-    } = payload;
+    return await api.post("patients", { json: payload }).json();
+  } catch (err: any) {
+    let data: any = null;
 
-    const body = {
-      ...emptyToUndef(rest),
-      birthDate: normalizeBirthDate(birthDate),
-    };
+    if (err?.response) {
+      try {
+        data = await err.response.json();
+      } catch {
+        try {
+          const text = await err.response.text();
+          data = text ? { message: text, rawText: text } : null;
+        } catch {
+          data = null;
+        }
+      }
 
-    // firstName / lastName doivent exister et non vides
-    if (!body['firstName'] || !body['lastName']) {
-      throw new Error('firstName et lastName sont requis');
+      err.response = {
+        ...err.response,
+        json: async () => data,
+      };
     }
 
-    return await api.post('patients', { json: body }).json<Patient>();
-  } catch (e: any) {
-    await throwWithDetails(e);
+    console.error("createPatient error", { payload, data });
+
+    throw err;
   }
 }
 

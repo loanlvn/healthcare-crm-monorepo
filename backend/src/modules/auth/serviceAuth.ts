@@ -149,7 +149,7 @@ export async function logout(refreshToken: string) {
       data: { revoked: true },
     });
   } catch {
-    // idempotent
+    // ignore
   }
 }
 
@@ -276,11 +276,11 @@ export async function forgotPasswordVerify(email: string, code: string) {
   });
   if (!ok) throw new AppError(400, "CODE_INVALID", "Invalid reset code");
 
-  // Emmetre un reset token JWT short lived
+  // Emmetre un reset token JWT
   const resetToken = sign(
     { sub: user.id, rid: pr.id }, 
     RESET_SECRET,
-    { expiresIn: RESET_TTL } // ex: '10m'
+    { expiresIn: RESET_TTL } 
   );
   return { resetToken };
 }

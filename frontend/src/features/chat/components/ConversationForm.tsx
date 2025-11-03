@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// CreateConversationForm.tsx — refonte UI compacte/translucide
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/Card";
@@ -37,7 +36,7 @@ export function CreateConversationForm({ onCreate, isCreating }: CreateConversat
 
   // Users search
   const [userQuery, setUserQuery] = useState("");
-  const [userRole, setUserRole] = useState<RolePick>(isAdmin ? "ALL" : (user?.role as RolePick));
+  const [userRole, setUserRole] = useState<RolePick>("ALL");
   const [userPage, setUserPage] = useState(1);
   const users = useUserPicker({
     q: userQuery,

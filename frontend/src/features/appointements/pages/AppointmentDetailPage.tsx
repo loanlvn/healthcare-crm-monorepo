@@ -49,7 +49,6 @@ export default function AppointmentDetailPage() {
 
   const appt = data as AppointmentDTO | undefined;
 
-  // ---- Patient (OK pour tous) ----
   const { data: fullPatient } = useQuery({
     enabled: !!appt?.patientId,
     queryKey: ["patient", appt?.patientId],
@@ -58,8 +57,6 @@ export default function AppointmentDetailPage() {
     retry: 1,
   });
 
-  // ---- IMPORTANT : on NE CHARGE PAS le docteur par id (pas de fetchDoctorById) ----
-  // On dérive un libellé affichable UNIQUEMENT à partir du contenu du rendez-vous.
   const doctorLabel = useMemo(() => {
     if (!appt) return "—";
     // 1) si le DTO contient déjà un objet docteur peuplé
@@ -74,7 +71,6 @@ export default function AppointmentDetailPage() {
     return appt.doctorId ?? "—";
   }, [appt]);
 
-  // Spécialités : seulement si présentes dans l'objet déjà inclus
   const doctorSpecialties = useMemo(() => {
     const prof = (appt as any)?.doctor?.doctorProfile;
     if (Array.isArray(prof?.specialties) && prof.specialties.length > 0) {

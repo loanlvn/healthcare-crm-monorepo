@@ -30,10 +30,8 @@ export default function DoctorPicker({
 
   const { data, isLoading, isFetching, isError, error } = useDoctorsForPicker(query);
 
-  // ✅ NEW: on mémorise le médecin choisi pour l'affichage, indépendant de la liste
   const [picked, setPicked] = useState<DoctorLite | null>(null);
 
-  // On garde la logique "selected via liste" comme fallback si picked n'est pas encore défini
   const selectedFromList = useMemo(() => data?.items?.find(d => d.id === value) ?? null, [data, value]);
 
   const meta = (data as any)?.meta ?? { page, pageSize: cappedPageSize, total: undefined as number | undefined };
@@ -88,8 +86,8 @@ export default function DoctorPicker({
                   key={d.id}
                   className={`px-3 py-2 cursor-pointer hover:bg-primary/5 ${active ? "bg-primary/10" : ""}`}
                   onClick={() => {
-                    setPicked(d);                 // ✅ mémorise localement
-                    onChange(d.id, d);            // remonte l'id au parent
+                    setPicked(d);
+                    onChange(d.id, d);
                   }}
                 >
                   <div className="text-sm text-fg">{full}</div>

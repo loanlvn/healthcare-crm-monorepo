@@ -3,7 +3,6 @@ import { date, trim, z } from 'zod';
 export const AppStatusEnum = z.enum(['SCHEDULED','CONFIRMED','CANCELLED','NO_SHOW','DONE']);
 
 // Query: GET /appointments
-// dto.ts
 export const listAppointmentsQuerySchema = z.object({
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
@@ -45,7 +44,6 @@ export const updateAppointmentSchema = z.object({
     }
     return true;
   }, { message: "startsAt must be before endsAt", path: ["startsAt"] })
-  // au moins un champ dans le patch
   .refine((v) => Object.keys(v).length > 0, { message: "Empty patch", path: [] });
 
 export type UpdateAppointmentDto = z.infer<typeof updateAppointmentSchema>;
@@ -64,7 +62,6 @@ export type AppointmentDTO = {
     notes?: string | null;
     createdAt: string;
     updatedAt: string;
-    //enrichissment léger pour la list et les détails
     patient? : {
         id: string;
         firstName: string | null;

@@ -34,10 +34,9 @@ await prisma.auditLog.deleteMany();
 await prisma.doctorProfile.deleteMany();
 await prisma.user.deleteMany();
 
-  // 1) Users (+ DoctorProfile pour les DOCTOR)
   const passAdmin     = await bcrypt.hash('Admin123@', 10);
-  const passDoctor1   = await bcrypt.hash('doctor123', 10);   // cardio
-  const passDoctor2   = await bcrypt.hash('doctor123', 10);   // dermato
+  const passDoctor1   = await bcrypt.hash('doctor123', 10);   
+  const passDoctor2   = await bcrypt.hash('doctor123', 10);   
   const passSecretary = await bcrypt.hash('secretary123', 10);
 
   const [admin, doctor1, doctor2, secretary] = await Promise.all([
@@ -101,7 +100,6 @@ await prisma.user.deleteMany();
     }),
   ]);
 
-  // 2) Patients (owner = doctor1). NEW champs soft delete présents par défaut.
   const patients = await prisma.$transaction([
     prisma.patient.create({
       data: {
@@ -189,8 +187,6 @@ await prisma.user.deleteMany();
     }),
   ]);
 
-  // 2.b) Assignations multi-docteurs (PatientDoctor)
-  // On assigne doctor2 (Dermatologie) sur 1 patient pour tester les permissions
   await prisma.patientDoctor.create({
     data: {
       patientId: patients[0].id,     // Alice
@@ -201,7 +197,6 @@ await prisma.user.deleteMany();
     },
   });
 
-  // 3) Appointments — on laisse majoritairement doctor1 ; un RDV avec doctor2 pour l’exemple
   type AppPlan = {
     p: Patient;
     dayOffset: number;
@@ -240,11 +235,9 @@ await prisma.user.deleteMany();
     appointments.push(created);
 
     for (const a of appointments) {
-  // on ne planifie que pour les RDV à venir, utiles et encore actifs
   if (['SCHEDULED', 'CONFIRMED'].includes(a.status) && a.startsAt > now) {
     const scheduledAt = new Date(a.startsAt.getTime() - 24 * 60 * 60 * 1000);
 
-    // Si le RDV est dans <24h, scheduledAt sera dans le passé -> le job l’enverra au prochain tick
     await prisma.appointmentReminder.upsert({
       where: { appointmentId: a.id },
       create: {
@@ -260,7 +253,6 @@ await prisma.user.deleteMany();
       },
     });
   } else {
-    // Sécurité: si RDV passé/annulé/done/no_show → s’assurer qu’aucun reminder n’existe
     await prisma.appointmentReminder.deleteMany({
       where: { appointmentId: a.id },
     });
@@ -268,7 +260,6 @@ await prisma.user.deleteMany();
 }
   }
 
-  // 4) Invoices
   const prefix = `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}`;
   let counter = 1;
   const nextNumber = () => `${prefix}${String(counter++).padStart(4, '0')}`;
@@ -277,7 +268,7 @@ await prisma.user.deleteMany();
     prisma.invoice.create({
       data: {
         patientId: patients[0].id,
-        appointmentId: appointments[0].id, // passé → DONE
+        appointmentId: appointments[0].id, 
         issuerId: doctor1.id,
         number: nextNumber(),
         date: addDays(-2),
@@ -327,7 +318,7 @@ await prisma.user.deleteMany();
     prisma.invoice.create({
       data: {
         patientId: patients[4].id,
-        appointmentId: appointments[4].id, // RDV doctor2
+        appointmentId: appointments[4].id, 
         issuerId: doctor2.id,
         number: nextNumber(),
         date: addDays(1),
@@ -362,7 +353,6 @@ await prisma.user.deleteMany();
     }),
   ]);
 
-  // 5) Payments
   await prisma.$transaction([
     prisma.payment.create({
       data: {
@@ -393,11 +383,8 @@ await prisma.user.deleteMany();
     }),
   ]);
 
-// 6) Conversations & Messages (nouveau modèle)
 
-//
 // Helpers pour le chat
-//
 async function ensureParticipants(conversationId: string, userIds: string[]) {
   const unique = Array.from(new Set(userIds));
   await prisma.conversationParticipant.createMany({
@@ -418,7 +405,6 @@ async function postMessage(conversationId: string, senderId: string, content: st
     },
   });
 
-  // Receipts: sender lu, les autres non-lu
   const participants = await prisma.conversationParticipant.findMany({
     where: { conversationId },
     select: { userId: true },
@@ -431,7 +417,6 @@ async function postMessage(conversationId: string, senderId: string, content: st
     })),
   });
 
-  // lastMessageAt
   await prisma.conversation.update({
     where: { id: conversationId },
     data: { lastMessageAt: msg.createdAt },
@@ -440,10 +425,6 @@ async function postMessage(conversationId: string, senderId: string, content: st
   return msg;
 }
 
-//
-// 6.a) Conversations PATIENT (une par patient, participants = owner (doctor1) + secretary)
-//      -> seuls les messages du DOCTOR owner sont seedés ici (conforme à la règle)
-//
 const patientConversations = new Map<string, string>();
 
 for (const p of patients) {
@@ -521,9 +502,7 @@ await postMessage(
   'NOTE'
 );
 
-//
-// 6.b) Conversation INTERNAL 1-to-1 (doctor1 <-> secretary) pour la coordination staff
-//
+
 const internalConv = await prisma.conversation.create({
   data: { type: 'INTERNAL' },
   select: { id: true },
@@ -533,7 +512,6 @@ await ensureParticipants(internalConv.id, [doctor1.id, secretary.id]);
 await postMessage(internalConv.id, secretary.id, "J'ai mis à jour l'agenda de demain.", 'NOTE');
 await postMessage(internalConv.id, doctor1.id, 'Merci, je regarde les dossiers.', 'NOTE');
 
-// (Optionnel) INTERNAL doctor1 <-> admin
 const internalAdminConv = await prisma.conversation.create({
   data: { type: 'INTERNAL' },
   select: { id: true },
@@ -541,64 +519,6 @@ const internalAdminConv = await prisma.conversation.create({
 await ensureParticipants(internalAdminConv.id, [doctor1.id, admin.id]);
 await postMessage(internalAdminConv.id, admin.id, 'Pense aux factures en attente.', 'REMINDER');
 
-
-  // 7) Notifications
-  await prisma.$transaction([
-    prisma.notification.create({
-      data: {
-        userId: doctor1.id,
-        type: 'APPOINTMENT_REMINDER',
-        payload: { appointmentId: appointments[2].id, at: appointments[2].startsAt },
-        channel: 'IN_APP',
-        status: 'PENDING',
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: secretary.id,
-        type: 'MESSAGE_NEW',
-        payload: { patientId: patients[0].id },
-        channel: 'IN_APP',
-        status: 'READ',
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: doctor1.id,
-        type: 'INVOICE_SENT',
-        payload: { invoiceId: invoices[1].id },
-        channel: 'IN_APP',
-        status: 'SENT',
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: admin.id,
-        type: 'PAYMENT_RECEIVED',
-        payload: { invoiceId: invoices[0].id, amount: 98.4 },
-        channel: 'IN_APP',
-        status: 'SENT',
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: doctor2.id,
-        type: 'PAYMENT_RECEIVED',
-        payload: { invoiceId: invoices[3].id, amount: 49.2 },
-        channel: 'IN_APP',
-        status: 'SENT',
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: secretary.id,
-        type: 'MESSAGE_NEW',
-        payload: { patientId: patients[3].id },
-        channel: 'IN_APP',
-        status: 'PENDING',
-      },
-    }),
-  ]);
 
 console.log('✅ Seed ok :',
   '\n- users:', await prisma.user.count(),
@@ -611,7 +531,6 @@ console.log('✅ Seed ok :',
   '\n- conversations:', await prisma.conversation.count(),
   '\n- messages:', await prisma.message.count(),
   '\n- messageReceipts:', await prisma.messageReceipt.count(),
-  '\n- notifications:', await prisma.notification.count()
 );
 
 }

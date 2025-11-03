@@ -35,7 +35,7 @@ function emptyToUndef(s?: string) {
   return s && s.trim() !== "" ? s : undefined;
 }
 
-// ----------------- props discriminées -----------------
+// props typées
 type InitialCreate = {
   mode: "create";
   startsAt?: string;
@@ -50,7 +50,7 @@ type InitialCreate = {
 
 type InitialUpdate = {
   mode: "update";
-  id: string; // identifiant du RDV à modifier
+  id: string; 
   startsAt?: string;
   endsAt?: string;
   patientId?: string;
@@ -69,18 +69,18 @@ type BaseProps = {
 };
 
 type CreateProps = BaseProps & {
-  initial: InitialCreate;                          // ← mode create
-  onSubmit: (data: CreateAppointmentBody) => void; // ← submit create
+  initial: InitialCreate;                          
+  onSubmit: (data: CreateAppointmentBody) => void; 
 };
 
 type UpdateProps = BaseProps & {
-  initial: InitialUpdate;                                        // ← mode update
-  onSubmit: (id: string, patch: UpdateAppointmentBody) => void;  // ← submit update (id séparé)
+  initial: InitialUpdate;
+  onSubmit: (id: string, patch: UpdateAppointmentBody) => void;
 };
 
 export type AppointmentEditorProps = CreateProps | UpdateProps;
 
-// ----------------- composant -----------------
+// composant
 export function AppointmentEditor(props: AppointmentEditorProps) {
   const { open, onClose, userRole, currentDoctorId } = props;
 
@@ -99,7 +99,7 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
   const [notes, setNotes] = useState(props.initial.notes ?? "");
   const [status, setStatus] = useState<ApptStatus>(props.initial.status ?? "SCHEDULED");
 
-  // Reset propre : uniquement à l'ouverture, pas à chaque re-render parent
+  // Reset
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     if (!open) { setHydrated(false); return; }
@@ -160,7 +160,6 @@ export function AppointmentEditor(props: AppointmentEditorProps) {
         notes: emptyToUndef(notes),
         status,
       };
-      // props est discriminé => TS sait que onSubmit attend un CreateAppointmentBody
       (props as CreateProps).onSubmit(payload);
     } else {
       const patch: UpdateAppointmentBody = {

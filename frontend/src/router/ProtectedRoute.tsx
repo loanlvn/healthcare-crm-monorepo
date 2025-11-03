@@ -1,4 +1,3 @@
-// src/routes/Protected.tsx
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../store/auth';
 import type { JSX } from 'react';

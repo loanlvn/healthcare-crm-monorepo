@@ -1,4 +1,3 @@
-// src/components/ui/inputs.tsx
 import { useState } from 'react';
 import { cn } from '../../lib/cn';
 import { Eye, EyeOff, ChevronDown } from 'lucide-react';

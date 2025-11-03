@@ -6,7 +6,6 @@ import { authAccess } from '../../middlewares/auth';
 
 const r = Router();
 
-// routes publiques (selon spec)
 r.post('/login',   asyncHandler(postLogin));
 r.post('/refresh', asyncHandler(postRefresh));
 r.post('/logout',  asyncHandler(postLogout));

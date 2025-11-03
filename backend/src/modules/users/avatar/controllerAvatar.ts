@@ -18,7 +18,6 @@ export async function postMyAvatar(req: Request, res: Response) {
     return res.status(200).json(out);
   } catch (e: any) {
     const msg = (e && e.message) || 'PROCESSING_ERROR';
-    // erreurs possibles: INVALID_MIME (jetée par fileFilter), sharp errors…
     return res.status(400).json({ error: msg });
   }
 }

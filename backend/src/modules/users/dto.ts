@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 export const createUserSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email('Email invalide'),
   password: z.string().min(8)
   .regex(/[A-Z]/, 'Must contain an uppercase letter')
   .regex(/[a-z]/, 'Must contain a lowercase letter')
   .regex(/[0-9]/, 'Must contain a number')
   .regex(/[^\w\s]/, 'Must contain a special character'),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  firstName: z.string().min(2, "Le prénom est requis."),
+  lastName: z.string().min(2, "Le nom est requis."),
   role: z.enum(['ADMIN','DOCTOR','SECRETARY']),
   isActive: z.boolean().optional(),
 });
@@ -17,7 +17,7 @@ export type CreateUserDTO = z.infer<typeof createUserSchema>;
 export const updateUserSchema = z.object({
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
-  role: z.enum(['ADMIN','DOCTOR','SECRETARY']).optional(), // ← cf. guard ci-dessous
+  role: z.enum(['ADMIN','DOCTOR','SECRETARY']).optional(),
   isActive: z.boolean().optional(),
   password: z.string().min(8).optional(),
 });

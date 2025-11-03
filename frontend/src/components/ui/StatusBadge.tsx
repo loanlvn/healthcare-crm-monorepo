@@ -1,5 +1,4 @@
-import type { ApptStatus } from "../../features/appointements/services/serviceAppointments";
-
+import type { ApptStatus } from "../../features/appointements/types/AppointmentsTypes";
 
 const palette: Record<ApptStatus, string> = {
 SCHEDULED: "bg-blue-100 text-blue-800",

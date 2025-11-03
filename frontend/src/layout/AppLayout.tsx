@@ -27,7 +27,7 @@ export default function AppLayout() {
       { to: "/billing/invoices", icon: FileText, label: "Factures" },
       { to: "/billing/payments", icon: CreditCard, label: "Paiements" },
     ];
-    if (user?.role === "ADMIN" || user?.role === "SECRETARY") {
+    if (user?.role === "ADMIN") {
       base.splice(3, 0, { to: "/doctors", icon: Users2, label: "Médecins" });
     }
     if (user?.role === "ADMIN")
@@ -66,7 +66,7 @@ export default function AppLayout() {
   );
 }
 
-/* --------------------------- Sub-components --------------------------- */
+// Sub-components 
 
 function Brand() {
   return (

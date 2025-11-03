@@ -1,7 +1,5 @@
-// src/features/billing/utils/pdfClient.ts
 import { api } from "@/lib/api";
 
-/** Transforme "/api/billing/invoices/:id/pdf" -> "billing/invoices/:id/pdf" pour ky(prefixUrl:'/api') */
 function toApiPath(u: string): string {
   try {
     const p = new URL(u, window.location.origin).pathname;

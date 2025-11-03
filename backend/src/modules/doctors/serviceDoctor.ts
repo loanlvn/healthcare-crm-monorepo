@@ -99,7 +99,6 @@ export async function upsertDoctorProfile(auth: Auth, userId: string, input: Ups
 }
 
 export async function listDistinctSpecialties(): Promise<string[]> {
-  // Prisma ne fournit pas nativement DISTINCT UNNEST sur array → raw SQL Postgres
   const rows: Array<{ specialty: string | null }> = await prisma.$queryRawUnsafe(
     'SELECT DISTINCT unnest("DoctorProfile"."specialties") AS specialty FROM "DoctorProfile"'
   );

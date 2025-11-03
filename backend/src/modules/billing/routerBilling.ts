@@ -91,6 +91,7 @@ billingRouter.get(
   PaymentController.detail
 );
 
+// STRIPE 
 billingRouter.post(
   "/stripe/checkout",
   requireLogged,

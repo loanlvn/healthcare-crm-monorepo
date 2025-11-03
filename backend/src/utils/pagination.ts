@@ -46,7 +46,6 @@ export type PageResponse<T> = {
     meta: PageMeta;
 };
 
-/** Utilitaire */
 function clampInt(n: any, min: number, max: number) {
   const x = Number(n);
   if (Number.isNaN(x) || !Number.isFinite(x)) return min;

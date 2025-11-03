@@ -2,7 +2,6 @@ import type { RequestHandler } from "express";
 import { prisma } from "../infra/prisma";
 import type { Role } from "@prisma/client";
 
-// /user/:id -> self check or admin
 export const requireSelfOrAdmin: RequestHandler = (req, res, next) => {
     const me = req.user!;
     const targetId = req.params.id;
@@ -16,7 +15,6 @@ export const requireLogged: RequestHandler = (req, res, next) => {
 };
 
 
-// Récupère un invoiceId depuis params/body/query selon la route.
 function pickInvoiceId(req: any): string | undefined {
   return (
     req.params?.id ||
@@ -63,7 +61,6 @@ export const requireRole = (...roles: Role[]): RequestHandler => (req, res, next
   return res.status(403).json({ error: 'FORBIDDEN' });
 };
 
-// MAJ patient autorisée si ADMIN || SECRETARY || (DOCTOR owner)
 export const requireOwnerPatientOrAdminOrSecretary: RequestHandler = async (req, res, next) => {
   const me = req.user!;
   if (me.role === 'ADMIN' || me.role === 'SECRETARY') return next();

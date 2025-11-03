@@ -20,7 +20,7 @@ function cleanPatch(patch: UpdateAppointmentBody): UpdateAppointmentBody {
     const t = patch.notes.trim();
     if (t) out.notes = t;
   }
-  if (patch.status) out.status = patch.status; // "CONFIRMED" | "DONE" | ...
+  if (patch.status) out.status = patch.status;
   return out;
 }
 
@@ -36,7 +36,7 @@ export async function fetchAppointments(params: ListParams = {}): Promise<PageRe
 
   const raw: any = await api.get(`appointments?${search.toString()}`).json();
 
-  // --- NORMALISATION ICI ---
+  // NORMALISATION ICI 
   const items: AppointmentDTO[] = raw.items ?? [];
   const meta = raw.meta ?? {
     page: Number(raw.page ?? params.page ?? 1),
@@ -73,13 +73,12 @@ export type UpdateAppointmentBody = Partial<Omit<CreateAppointmentBody, "patient
 export async function updateAppointment(id: string, patch: UpdateAppointmentBody): Promise<AppointmentDTO> {
   const body = cleanPatch(patch);
   try {
-    // ⚠️ passe en PATCH (beaucoup d'APIs refusent PUT partiel)
+    //  passe en PATCH
     return await api.patch(`appointments/${id}`, { json: body }).json<AppointmentDTO>();
   } catch (e: any) {
-    // log utile en dev
     const status = e?.response?.status;
     let details = "";
-    try { details = await e.response.json(); } catch { /* noop */ }
+    try { details = await e.response.json(); } catch { /* ignore */ }
     console.error("PATCH /appointments/:id failed", { status, body, details });
     throw e;
   }

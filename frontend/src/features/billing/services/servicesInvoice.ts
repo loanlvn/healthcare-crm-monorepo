@@ -1,4 +1,3 @@
-// src/features/billing/services/invoices.ts
 import { api } from "@/lib/api";
 import { type PageResponse } from "../types/billingTypes";
 import type {
@@ -11,7 +10,7 @@ import type {
 
 const BASE = "billing";
 
-// util: ne pas envoyer de clés undefined dans l'URL
+// ne pas envoyer de clés undefined dans l'URL
 function toSearchParams(p: ListInvoicesParams = {}): Record<string, string> {
   const o: Record<string, string> = {};
   if (p.q != null && p.q !== "") o.q = p.q;

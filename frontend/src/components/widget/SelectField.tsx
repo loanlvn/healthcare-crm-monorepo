@@ -39,7 +39,6 @@ export function SelectField({
       required={required}
       description={description}
       render={({ field, id, describedBy, invalid }) => {
-        // onChange avec cast optionnel
         const handleChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
           const raw = e.target.value;
           const val = raw === '' ? '' : valueType === 'number' ? Number(raw) : raw;

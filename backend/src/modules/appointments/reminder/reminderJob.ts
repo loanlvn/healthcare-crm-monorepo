@@ -1,4 +1,3 @@
-// src/features/appointments/jobs/reminderJob.ts
 import { prisma } from "../../../infra/prisma";
 import { ReminderService } from "../reminder/serviceReminder";
 import { NotificationService } from "../serviceAppointment";
@@ -12,7 +11,6 @@ export function startReminderJob() {
   async function tick() {
     const now = new Date();
 
-    // on envoie tous les rappels planifiés dont scheduledAt <= maintenant et encore en PENDING
     const due = await prisma.appointmentReminder.findMany({
       where: {
         status: "PENDING",
@@ -32,14 +30,12 @@ export function startReminderJob() {
     }
   }
 
-  // aligne le tick sur la minute/intervalle
   const delay = INTERVAL_MS - (Date.now() % INTERVAL_MS);
   initialTimeout = setTimeout(() => {
     tick().catch(console.error);
     interval = setInterval(() => tick().catch(console.error), INTERVAL_MS);
   }, delay);
 
-  // retourne un stop() pour l’arrêt propre du serveur
   return () => {
     if (initialTimeout) clearTimeout(initialTimeout);
     if (interval) clearInterval(interval);

@@ -81,8 +81,7 @@ export const ChatController = {
   sendDirect: asyncHandler(async (req: Request, res: Response) => {
     const me = { id: req.user!.id, role: req.user!.role as Role };
 
-    // Aligne avec le front : { toUserId, content, type? }
-    const dto = directMessageSchema.parse(req.body); // { toUserId, content, type? }
+    const dto = directMessageSchema.parse(req.body);
 
     const msg = await ChatService.sendDirect(
       me,

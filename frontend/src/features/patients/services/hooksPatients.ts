@@ -6,7 +6,7 @@ import { useAuth } from "@/store/auth";
 export type Order = "asc" | "desc";
 export type PatientsQuery = {
   q?: string;
-  ownerId?: string; // DOCTOR → filtré automatiquement
+  ownerId?: string; 
   page?: number;
   pageSize?: number;
   orderBy?: "firstName" | "lastName" | "createdAt" | "updatedAt";

@@ -7,7 +7,6 @@ import jwt from 'jsonwebtoken';
 const isProd = process.env.NODE_ENV === 'production';
 
 function fromPrisma(err: unknown): AppError | null {
-  // Prisma "known" errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     switch (err.code) {
       case 'P2002': // Unique constraint
@@ -37,14 +36,14 @@ function fromJwt(err: unknown): AppError | null {
 }
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
-  // Zod → 400
+  // Zod
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: { code: 'VALIDATION_ERROR', message: 'Invalid input', details: err.issues },
     });
   }
 
-  // AppError (throw volontaire depuis services/controllers)
+  // AppError
   if (err instanceof AppError) {
     return res.status(err.status).json({
       error: { code: err.code, message: err.message, details: err.details },

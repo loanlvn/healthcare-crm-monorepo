@@ -16,8 +16,7 @@ import {
 import { mailer } from "../../../mailer/mailer";
 import { pdfService } from "../../../utils/pdfService";
 
-
-// -- helpers de sérialisation pour PDF ---------------------------------------
+// helpers pour PDF
 const toNumber = (v: unknown) =>
   v == null ? 0 : typeof v === "number" ? v : Number(v as any);
 
@@ -26,14 +25,11 @@ function serializeInvoiceForPdf(inv: any) {
     id: inv.id,
     number: inv.number,
     date: inv.date,
-    currency: inv.currency, // "EUR"
+    currency: inv.currency,
     items: Array.isArray(inv.items) ? inv.items : [],
-
-    // Prisma.Decimal -> number
     subtotal: toNumber(inv.subtotal),
     taxTotal: toNumber(inv.taxTotal),
     total: toNumber(inv.total),
-
     status: inv.status,
     patient: {
       id: inv.patient.id,
@@ -118,7 +114,7 @@ export class InvoiceController {
     });
   }
 
-  // POST /invoices  (guards vérifient rôle + ownership patient pour doctor)
+  // POST /invoices
   static async create(req: Request, res: Response) {
     const me = req.user!;
     const body = CreateInvoiceSchema.parse(req.body);
@@ -155,14 +151,14 @@ export class InvoiceController {
     res.status(201).json(invoice);
   }
 
-  // GET /invoices/:id  (guard: requireInvoiceAccessOrAdminOrSecretary)
+  // GET /invoices/:id
   static async detail(req: Request, res: Response) {
     const invoice = await getInvoiceWithPayments(req.params.id);
     if (!invoice) throw notFound("INVOICE_NOT_FOUND");
     res.json(invoice);
   }
 
-  // PATCH /invoices/:id  (guards: access + issuer/admin + editable)
+  // PATCH /invoices/:id
   static async edit(req: Request, res: Response) {
     const id = req.params.id;
     const body = EditInvoiceSchema.parse(req.body);
@@ -255,7 +251,7 @@ export class InvoiceController {
     res.json(updated);
   }
 
-  // POST /invoices/:id/void  (guard: requireAdminToVoidInvoice)
+  // POST /invoices/:id/void
   static async void(req: Request, res: Response) {
     const id = req.params.id;
 
@@ -275,36 +271,31 @@ export class InvoiceController {
   }
 
   static async getInvoicePdf(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
-    const user = (req as any).user;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { id } = req.params;
+      const user = (req as any).user;
+      if (!user) return res.status(401).json({ error: "Unauthorized" });
 
-    // Récupération complète (items, patient, issuer, payments, etc.)
-    const invDb = await getInvoiceWithPayments(id);
-    if (!invDb) return res.status(404).json({ error: "INVOICE_NOT_FOUND" });
+      const invDb = await getInvoiceWithPayments(id);
+      if (!invDb) return res.status(404).json({ error: "INVOICE_NOT_FOUND" });
 
-    // Sérialise au format attendu par pdfService
-    const invForPdf = serializeInvoiceForPdf(invDb);
+      const invForPdf = serializeInvoiceForPdf(invDb);
 
-    // Génère le buffer PDF
-    const pdfBuffer = await pdfService.renderInvoice(invForPdf);
-    if (!pdfBuffer || pdfBuffer.length === 0) {
-      return res.status(500).json({ error: "Empty PDF buffer" });
+      // Génère le buffer PDF
+      const pdfBuffer = await pdfService.renderInvoice(invForPdf);
+      if (!pdfBuffer || pdfBuffer.length === 0) {
+        return res.status(500).json({ error: "Empty PDF buffer" });
+      }
+
+      const filename = `invoice-${invDb.number || invDb.id}.pdf`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+      res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+
+      return res.status(200).send(pdfBuffer);
+    } catch (e) {
+      console.error("getInvoicePdf error", e);
+      return res.status(500).json({ error: "Unable to render invoice PDF" });
     }
-
-    const filename = `invoice-${invDb.number || invDb.id}.pdf`;
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
-    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
-
-    return res.status(200).send(pdfBuffer);
-  } catch (e) {
-    console.error("getInvoicePdf error", e);
-    return res.status(500).json({ error: "Unable to render invoice PDF" });
   }
 }
-
-}
-
-

@@ -13,7 +13,7 @@ r.post('/messages/direct', ChatController.sendDirect);
 r.post('/messages/:id/read', ChatController.markRead);
 r.get('/directory', ChatController.directoryUsers);
 
-// puis les dynamiques
+// Conversations spécifiques
 r.get('/:id/messages', ChatController.listMessages);
 r.post('/:id/messages', ChatController.postMessage);
 r.post('/:id/participants', ChatController.addParticipants);

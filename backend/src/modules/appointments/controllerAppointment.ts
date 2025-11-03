@@ -1,4 +1,3 @@
-// src/features/appointments/controllerAppointments.ts
 import { Request, Response } from "express";
 import { AppointmentsService } from "./serviceAppointment";
 import {

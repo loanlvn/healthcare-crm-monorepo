@@ -64,8 +64,6 @@ export function PdfActions({ pdfUrl }: { pdfUrl: string }) {
   async function handleDownload() {
     setErr(null);
     if (cross) {
-      // Le download attribute est ignoré sur cross-origin dans la plupart des browsers.
-      // On tente une navigation directe ; l'utilisateur pourra "Enregistrer sous..." dans le viewer PDF.
       const win = window.open(pdfUrl, "_blank", "noopener,noreferrer");
       if (!win) {
         const a = document.createElement("a");

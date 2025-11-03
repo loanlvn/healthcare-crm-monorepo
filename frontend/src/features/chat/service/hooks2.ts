@@ -169,7 +169,6 @@ export function useDirectory(params: { q?: string; role?: 'DOCTOR' | 'SECRETARY'
   });
 }
 
-/** NEW: create (dé-dupliqué côté back) */
 export function useCreateConversation() {
   const qc = useQueryClient();
   return useMutation({
@@ -180,7 +179,6 @@ export function useCreateConversation() {
   });
 }
 
-/** NEW: helpers ergonomiques */
 export function useEnsureConversation() {
   const m = useCreateConversation();
   return {
@@ -189,3 +187,4 @@ export function useEnsureConversation() {
     state: m,
   };
 }
+

@@ -2,8 +2,6 @@ import { useMemo, useState } from "react";
 import { useDebouncedValue } from "../services/hooksAppointments2";
 import { usePatientsForPicker, usePatient, type PatientLite } from "@/features/patients/services/hooksPatients";
 
-
-// PatientPickerAppointments.tsx
 export default function PatientPicker({
   value, onChange, ownerId, required, disabled, pageSize = 20, className,
   placeholder = "Rechercher un patient…",
@@ -30,7 +28,6 @@ export default function PatientPicker({
     order: "asc",
   });
 
-  // fallback pour afficher le libellé même si le patient sélectionné n'est pas dans la page
   const { data: selected } = usePatient(value);
   const current = useMemo(
     () => (value ? data?.items?.find(p => p.id === value) || selected : undefined),

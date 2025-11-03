@@ -40,7 +40,6 @@ export default function UserDetailPage() {
   const isAdmin = me?.role === 'ADMIN';
   const hasId = Boolean(id);
 
-  // ✅ On appelle TOUJOURS les hooks ; on bloque le fetch avec `enabled`
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['user', id],
     queryFn: () => fetchUserById(id as string),

@@ -31,7 +31,6 @@ export default function NewInvoicePage() {
       0
     );
 
-  // 4) Mais avant d’envoyer au backend, convertis taxRate (%) -> ratio (0–1)
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!selectedPatientId) return alert("Veuillez sélectionner un patient");
@@ -54,11 +53,12 @@ export default function NewInvoicePage() {
       { onSuccess: (created: any) => nav(`/billing/invoices/${created.id}`) }
     );
   }
-
-  const stripLeadingZerosInt = (s: string) => s.replace(/^0+(?=\d)/, ""); // "060" -> "60", "0" -> "0"
+  
+// "060" -> "60", "0" -> "0"
+  const stripLeadingZerosInt = (s: string) => s.replace(/^0+(?=\d)/, ""); 
 
   const stripLeadingZerosFloat = (s: string) => {
-    if (s.startsWith("0.") || s === "0" || s === "") return s; // ok pour "0.x"
+    if (s.startsWith("0.") || s === "0" || s === "") return s; 
     return s.replace(/^0+(?=\d)/, "");
   };
 
